@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     // For each reservation, fetch its items to aggregate adult and children counts
     const populatedReservations = await Promise.all(reservations.map(async (reservation: any) => {
-      const itemsRes = await fetch(`${DIRECTUS_URL}/items/reservation_items_hos?filter[reservation_id][_eq]=${reservation.id}&fields=adults_count,children_count`, {
+      const itemsRes = await fetch(`${DIRECTUS_URL}/items/reservation_items_hos?filter[reservation_id][_eq]=${reservation.id}&fields=room_id,adults_count,children_count`, {
         method: "GET",
         headers: authHeaders,
       });
@@ -50,9 +50,21 @@ export async function GET(req: NextRequest) {
       if (itemsRes.ok) {
         const itemsData = await itemsRes.json();
         const items = itemsData.data || [];
+        
+        // Group by room_id to avoid recounting guests for each night of the stay
+        const roomGuestMap = new Map();
         for (const item of items) {
-          adults_count += item.adults_count;
-          children_count += item.children_count;
+          if (!roomGuestMap.has(item.room_id)) {
+            roomGuestMap.set(item.room_id, {
+              adults_count: item.adults_count || 0,
+              children_count: item.children_count || 0,
+            });
+          }
+        }
+
+        for (const counts of roomGuestMap.values()) {
+          adults_count += counts.adults_count;
+          children_count += counts.children_count;
         }
       }
 

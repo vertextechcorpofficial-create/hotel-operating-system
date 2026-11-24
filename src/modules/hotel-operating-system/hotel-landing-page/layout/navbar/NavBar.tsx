@@ -9,6 +9,7 @@ export function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const pathname = usePathname(); // Reads the active route location to handle focus styles
   const router = useRouter();
@@ -43,7 +44,8 @@ export function NavBar() {
           setUser(data.user);
         }
       })
-      .catch((err) => console.error("[NavBar] Failed to fetch session:", err));
+      .catch((err) => console.error("[NavBar] Failed to fetch session:", err))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleLogout = async () => {
@@ -143,15 +145,28 @@ export function NavBar() {
                 <Globe size={16} strokeWidth={1.8} className="text-neutral-700" />
                 <span className="text-sm text-neutral-700">EN</span>
               </div>
-              {user ? (
+              {loading ? (
+                <div className="flex gap-2 items-center h-8">
+                  <div className="w-16 h-8 bg-neutral-100 animate-pulse rounded-md"></div>
+                  <div className="w-16 h-8 bg-neutral-100 animate-pulse rounded-md"></div>
+                </div>
+              ) : user ? (
                 <div className="relative">
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center gap-2 cursor-pointer outline-none hover:opacity-80 transition-opacity"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#111111] text-white flex items-center justify-center text-sm font-semibold">
-                      {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
-                    </div>
+                    {user.profile_picture ? (
+                      <img 
+                        src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/assets/${user.profile_picture}?width=100&height=100&fit=cover`} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover bg-neutral-100" 
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#111111] text-white flex items-center justify-center text-sm font-semibold">
+                        {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+                      </div>
+                    )}
                     <span className="text-sm font-medium text-black hidden md:block">{user.first_name}</span>
                     <ChevronDown size={14} className="text-neutral-500 hidden md:block" />
                   </button>
@@ -259,12 +274,25 @@ export function NavBar() {
               <span className="text-base font-semibold text-white">EN</span>
             </div>
 
-            {user ? (
+            {loading ? (
+              <div className="flex flex-col gap-3 mt-2">
+                <div className="w-full h-10 bg-white/10 animate-pulse rounded-[10px]"></div>
+                <div className="w-full h-10 bg-white/10 animate-pulse rounded-[10px]"></div>
+              </div>
+            ) : user ? (
               <div className="flex flex-col gap-3 mt-2">
                 <div className="flex items-center gap-3 px-1 text-white py-2 border-b border-white/10 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-lg font-semibold">
-                    {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
-                  </div>
+                  {user.profile_picture ? (
+                    <img 
+                      src={`${process.env.NEXT_PUBLIC_API_BASE_URL}/assets/${user.profile_picture}?width=100&height=100&fit=cover`} 
+                      alt="Profile" 
+                      className="w-10 h-10 rounded-full object-cover bg-white/20" 
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-lg font-semibold">
+                      {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
                   <div>
                     <p className="font-medium text-base">{user.first_name} {user.last_name}</p>
                     <p className="text-sm text-white/60">{user.email}</p>

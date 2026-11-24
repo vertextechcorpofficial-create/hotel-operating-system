@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const { accountId, guestId } = sessionData;
 
     const body = await req.json();
-    const { email, id_number, id_photo_uuid } = body;
+    const { email, username, contact_number, id_type, id_number, id_photo_uuid, profile_picture } = body;
 
     const DIRECTUS_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const DIRECTUS_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
@@ -27,9 +27,13 @@ export async function POST(req: NextRequest) {
 
     // 1. Update guest_accounts_hos
     const accountPayload: any = {};
-    if (email) accountPayload.email = email;
-    if (id_number) accountPayload.id_number = id_number;
-    if (id_photo_uuid) accountPayload.id_photo_uuid = id_photo_uuid;
+    if (email !== undefined) accountPayload.email = email;
+    if (username !== undefined) accountPayload.username = username;
+    if (contact_number !== undefined) accountPayload.contact_number = contact_number;
+    if (id_type !== undefined) accountPayload.id_type = id_type;
+    if (id_number !== undefined) accountPayload.id_number = id_number;
+    if (id_photo_uuid !== undefined) accountPayload.id_photo_uuid = id_photo_uuid;
+    if (profile_picture !== undefined) accountPayload.profile_picture = profile_picture;
 
     if (Object.keys(accountPayload).length > 0) {
       const accountRes = await fetch(`${DIRECTUS_URL}/items/guest_accounts_hos/${accountId}`, {
@@ -47,7 +51,8 @@ export async function POST(req: NextRequest) {
 
     // 2. Update guests_hos
     const profilePayload: any = {};
-    if (email) profilePayload.email = email;
+    if (email !== undefined) profilePayload.email = email;
+    if (contact_number !== undefined) profilePayload.contact_number = contact_number;
 
     if (Object.keys(profilePayload).length > 0) {
       const profileRes = await fetch(`${DIRECTUS_URL}/items/guests_hos/${guestId}`, {

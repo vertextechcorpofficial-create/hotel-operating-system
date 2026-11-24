@@ -286,7 +286,7 @@ function RoomDetailsViewInner({ room }: RoomDetailsViewProps) {
 
               {/* Edit Dates Overlay */}
               <Link
-                href={`/hotel-landing-page/availability?${searchParams.toString()}`}
+                href={`/hotel-landing-page/availability?${searchParams.toString()}${!searchParams.has('roomId') && !searchParams.has('roomIds') ? `&roomId=${room.id}` : ''}`}
                 className="absolute inset-0 flex items-center justify-center bg-zinc-950/5 opacity-0 group-hover/date:opacity-100 transition-opacity duration-200 backdrop-blur-[1px] cursor-pointer w-full text-center"
               >
                 <span className="bg-white text-zinc-900 font-bold uppercase tracking-wider px-4 py-2 rounded-none shadow-sm text-[9px] flex items-center gap-1.5 border border-zinc-200">

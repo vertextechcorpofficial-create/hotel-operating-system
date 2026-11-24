@@ -196,7 +196,10 @@ export function CalendarLayout({ rooms = [] }: { rooms?: CalendarRoom[] }) {
     if (!checkInDate || !checkOutDate) return;
     const params = new URLSearchParams(searchParams.toString());
     
-    if (params.get("roomIds")) {
+    const roomId = params.get("roomId");
+    if (roomId) {
+      router.push(`/hotel-landing-page/rooms/${roomId}?${params.toString()}`);
+    } else if (params.get("roomIds")) {
       router.push(`/hotel-landing-page/booking?${params.toString()}`);
     } else {
       router.push(`/hotel-landing-page/rooms?${params.toString()}`);
