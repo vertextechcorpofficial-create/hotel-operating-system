@@ -121,7 +121,12 @@ export function BookingForm() {
         }
 
         setLoadingRooms(true);
-        fetch(`/api/hos/front-desk-dashboard/available-rooms?roomTypeId=${selectedRoomTypeId}`)
+        const roomsQuery = new URLSearchParams({ roomTypeId: selectedRoomTypeId });
+        if (checkInDate && checkOutDate && checkOutDate > checkInDate) {
+            roomsQuery.set("checkIn", checkInDate);
+            roomsQuery.set("checkOut", checkOutDate);
+        }
+        fetch(`/api/hos/front-desk-dashboard/available-rooms?${roomsQuery.toString()}`)
             .then((res) => res.json())
             .then((data) => {
                 setAvailableRooms(data.data || []);
@@ -134,7 +139,7 @@ export function BookingForm() {
                 setSelectedRoomId("unassigned");
                 setLoadingRooms(false);
             });
-    }, [selectedRoomTypeId]);
+    }, [selectedRoomTypeId, checkInDate, checkOutDate]);
 
     // Walk-in overrides
     useEffect(() => {

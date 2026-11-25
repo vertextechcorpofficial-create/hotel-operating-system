@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { decodeJwtPayload, COOKIE_NAME } from '@/lib/auth-utils';
+import { roomUpdateSchema, validateImagePayload } from '../validation';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
 
@@ -39,7 +40,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             if (payload && payload.sub) userId = parseInt(payload.sub, 10);
         }
 
-        const body = await request.json();
+        const parsedBody = roomUpdateSchema.safeParse(await request.json().catch(() => null));
+        if (!parsedBody.success) {
+            return NextResponse.json({ error: 'Invalid room data.', details: parsedBody.error.flatten().fieldErrors }, { status: 400 });
+        }
+        const body = parsedBody.data;
+        const imageError = validateImagePayload(body.main_image_url);
+        if (imageError) {
+            return NextResponse.json({ error: imageError }, { status: 400 });
+        }
         const staticToken = process.env.DIRECTUS_STATIC_TOKEN;
 
         if (body.main_image_url && body.main_image_url.startsWith('data:image')) {

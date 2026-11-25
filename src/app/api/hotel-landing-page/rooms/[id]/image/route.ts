@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { z } from "zod";
+import { decodeJwtPayload, COOKIE_NAME } from "@/lib/auth-utils";
+
+// Accepts a Directus file UUID or a plain filename only
+const patchImageSchema = z.object({
+  main_image_url: z.string().min(1).max(255).regex(/^[A-Za-z0-9._-]+$/),
+});
 
 export const runtime = "nodejs";
 
@@ -99,7 +107,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Params }) {
   const DIRECTUS_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const DIRECTUS_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
 
-  const { main_image_url } = (await req.json()) as { main_image_url: string };
+  // Only authenticated staff may change a room's image reference
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get(COOKIE_NAME)?.value;
+  const sessionPayload = sessionToken ? decodeJwtPayload(sessionToken) : null;
+  if (!sessionPayload?.sub) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  if (!DIRECTUS_URL || !DIRECTUS_TOKEN) {
+    return NextResponse.json({ error: "Directus configuration is missing" }, { status: 500 });
+  }
+
+  if (!/^\d+$/.test(id)) {
+    return NextResponse.json({ error: "Invalid room type id." }, { status: 400 });
+  }
+
+  const parsedBody = patchImageSchema.safeParse(await req.json().catch(() => null));
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: "Invalid image reference." }, { status: 400 });
+  }
+  const { main_image_url } = parsedBody.data;
 
   const response = await fetch(`${DIRECTUS_URL}/items/room_types_hos/${id}`, {
     method: "PATCH",
