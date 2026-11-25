@@ -60,16 +60,21 @@ export function ExtendStayDialog({ open, onOpenChange, departure, onSuccess }: E
 
         const fetchDetails = async () => {
             try {
-                // Get the current reservation to get the min date
-                const res = await fetch(`/api/hos/front-desk-dashboard`);
-                await res.json();
-                
-                // Let's find this reservation checkout date or default to tomorrow
-                const today = new Date();
-                const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-                const tomorrowStr = tomorrow.toISOString().split("T")[0];
-                setMinDate(tomorrowStr);
-                setNewCheckOutDate(tomorrowStr);
+                const res = await fetch(`/api/hos/folio?reservationId=${departure.reservationId}`);
+                const result = await res.json();
+                const currentOut: string | undefined = result?.data?.reservation?.check_out_date || result?.data?.reservation?.check_out;
+
+                let baseDate = new Date();
+                if (currentOut) {
+                    const [y, m, d] = currentOut.split("T")[0].split("-").map(Number);
+                    if (y && m && d) {
+                        baseDate = new Date(Date.UTC(y, m - 1, d));
+                    }
+                }
+                const nextDay = new Date(baseDate.getTime() + 24 * 60 * 60 * 1000);
+                const nextDayStr = nextDay.toISOString().split("T")[0];
+                setMinDate(nextDayStr);
+                setNewCheckOutDate(nextDayStr);
             } catch {
                 toast.error("Failed to load reservation details.");
             } finally {

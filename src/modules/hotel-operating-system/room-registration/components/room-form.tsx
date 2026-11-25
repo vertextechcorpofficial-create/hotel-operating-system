@@ -144,7 +144,8 @@ export function RoomForm({ open, onOpenChange, initialData, onSuccess }: RoomFor
                                             <Input 
                                                 type="number" 
                                                 {...field} 
-                                                onChange={(e) => field.onChange(e.target.valueAsNumber)} 
+                                                value={Number.isNaN(field.value) ? "" : (field.value ?? "")}
+                                                onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))} 
                                             />
                                         </FormControl>
                                         <FormMessage />

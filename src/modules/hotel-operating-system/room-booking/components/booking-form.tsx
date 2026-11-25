@@ -40,6 +40,17 @@ export function BookingForm() {
     // Mode State
     const [isWalkIn, setIsWalkIn] = useState(false);
 
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("mode") === "walk-in") {
+                setIsWalkIn(true);
+                setSelectedRoomId("");
+                setBookingSource("Walk-In");
+            }
+        }
+    }, []);
+
     // Form States
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");

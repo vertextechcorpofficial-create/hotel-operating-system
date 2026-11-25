@@ -3,7 +3,7 @@
 import { directus } from "../lib/directus";
 import { createItem, createItems, readItems, updateItem, updateItems } from "@directus/sdk";
 import { initiatePaymentSession } from "./payment/paymongo.service";
-import { BookingFormValues } from "../schema/booking.schema";
+import { bookingSchema, BookingFormValues } from "../schema/booking.schema";
 
 // --- STRICT INTERFACES FOR DOMAIN TYPE SAFETY ---
 
@@ -244,23 +244,43 @@ export async function createBookingTransaction(
   data: BookingFormValues, 
   details: BookingTransactionPayload
 ): Promise<{ success: boolean; id?: string | number; checkoutUrl?: string; error?: string }> {
+  let createdReservationId: string | number | null = null;
   try {
+    const validatedData = bookingSchema.parse(data);
     await cleanupExpiredPendingReservations();
 
-    const guestId = await getOrCreateGuest(data);
-
-    // 1. Build linear date sequence ranges
-    const start = new Date(details.checkin);
-    const end = new Date(details.checkout);
-    const dates: string[] = [];
-    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-      dates.push(d.toISOString().split("T")[0]);
+    // 1. Validate dates strictly in UTC date-only math
+    const [cy, cm, cd] = (details.checkin || "").split("-").map(Number);
+    const [oy, om, od] = (details.checkout || "").split("-").map(Number);
+    if (!cy || !cm || !cd || !oy || !om || !od) {
+      throw new Error("Invalid check-in or check-out date.");
     }
+    const startMs = Date.UTC(cy, cm - 1, cd);
+    const endMs = Date.UTC(oy, om - 1, od);
+    const now = new Date();
+    const todayMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    if (startMs < todayMs) {
+      throw new Error("Check-in date cannot be in the past.");
+    }
+    if (endMs <= startMs) {
+      throw new Error("Check-out date must be after check-in date.");
+    }
+
+    const dates: string[] = [];
+    for (let ms = startMs; ms < endMs; ms += 86_400_000) {
+      dates.push(new Date(ms).toISOString().split("T")[0]);
+    }
+
+    const guestId = await getOrCreateGuest(validatedData);
 
     // 2. Map requested room types to available physical rooms
     const typeAllocations: Record<number, number> = {};
     for (const roomTypeId of details.roomIds) {
       typeAllocations[roomTypeId] = (typeAllocations[roomTypeId] || 0) + 1;
+    }
+
+    if (Object.keys(typeAllocations).length === 0) {
+      throw new Error("Please select at least one room.");
     }
 
     const physicalRoomAllocations: Array<{ roomTypeId: number; physicalRoomId: number }> = [];
@@ -280,10 +300,32 @@ export async function createBookingTransaction(
       }
     }
 
-    // 3. Coerce pricing securely to verify numbers before database writing or API calls
-    const trueNumericTotal = Number(details.total);
+    // 3. Recompute pricing server-side from Directus room_types_hos (never trust client total)
+    const requestedTypeIds = Object.keys(typeAllocations).map(Number);
+    const roomTypes = await directus.request<Array<{ id: number; name?: string; price: string | number }>>(
+      readItems("room_types_hos", {
+        filter: { id: { _in: requestedTypeIds } },
+        fields: ["id", "name", "price"],
+      })
+    );
+    const priceByType = new Map<number, { name: string; price: number }>();
+    for (const rt of roomTypes) {
+      priceByType.set(rt.id, { name: rt.name || `Room ${rt.id}`, price: parseFloat(String(rt.price)) || 0 });
+    }
+
+    let trueNumericTotal = 0;
+    const roomNamesList: string[] = [];
+    for (const [roomTypeIdStr, countRequested] of Object.entries(typeAllocations)) {
+      const rt = priceByType.get(Number(roomTypeIdStr));
+      if (!rt || rt.price <= 0) {
+        throw new Error("Invalid room type selected.");
+      }
+      trueNumericTotal += rt.price * countRequested * dates.length;
+      roomNamesList.push(countRequested > 1 ? `${rt.name} x${countRequested}` : rt.name);
+    }
+    trueNumericTotal = Math.round(trueNumericTotal * 100) / 100;
     if (isNaN(trueNumericTotal) || trueNumericTotal <= 0) {
-      throw new Error(`Invalid total calculation parameter passed to server pipeline: (${details.total})`);
+      throw new Error("Unable to compute valid reservation total.");
     }
 
     // 4. Insert the tracking metadata header as "pending"
@@ -297,6 +339,7 @@ export async function createBookingTransaction(
         status: "pending",
       })
     );
+    createdReservationId = reservation.id;
 
     // 5. Draft physical unit items to populate relational schema bindings
     const itemsToCreate: DirectusReservationItem[] = [];
@@ -306,8 +349,8 @@ export async function createBookingTransaction(
           reservation_id: reservation.id,
           room_id: alloc.physicalRoomId,
           night_date: date,
-          adults_count: Number(details.adults ?? 2),
-          children_count: Number(details.children ?? 0),
+          adults_count: Math.max(1, Number(details.adults ?? 2)),
+          children_count: Math.max(0, Number(details.children ?? 0)),
         });
       }
     }
@@ -315,20 +358,13 @@ export async function createBookingTransaction(
     await directus.request(createItems("reservation_items_hos", itemsToCreate));
 
     // 6. --- CONNECT TO THE PAYMONGO SESSION GATEWAY ---
-    const roomNamesDisplay: string = details.roomDetails.map((r) => r.name).join(", ");
-    
-    // Server console logging to confirm structural integrity during debugging
-    console.log("DEBUG: Handing execution over to PayMongo service wrapper with properties:", {
-      totalAmountSent: trueNumericTotal,
-      computedRoomDisplayString: roomNamesDisplay,
-      assignedReservationID: reservation.id
-    });
+    const roomNamesDisplay: string = roomNamesList.join(", ");
 
     const paymentSession = await initiatePaymentSession({
       amount: trueNumericTotal,
-      guestName: `${data.firstName} ${data.lastName}`,
-      guestEmail: data.email,
-      guestPhone: data.phone,
+      guestName: `${validatedData.firstName} ${validatedData.lastName}`,
+      guestEmail: validatedData.email,
+      guestPhone: validatedData.phone,
       roomName: roomNamesDisplay,
       reservationId: reservation.id.toString(),
     });
@@ -337,7 +373,6 @@ export async function createBookingTransaction(
       throw new Error(paymentSession.error || "The processing financial gateway rejected token authorization initialization.");
     }
 
-    // Hand back the complete successful confirmation sequence data array directly to the view layout
     return { 
       success: true, 
       id: reservation.id, 
@@ -345,6 +380,15 @@ export async function createBookingTransaction(
     };
 
   } catch (error: unknown) {
+    if (createdReservationId != null) {
+      try {
+        await directus.request(
+          updateItem("reservations_hos", createdReservationId, { status: "cancelled" })
+        );
+      } catch (cancelErr) {
+        console.error("Failed to cancel orphaned pending reservation:", cancelErr);
+      }
+    }
     console.error("Booking Transaction Failed:", error);
     return {
       success: false,

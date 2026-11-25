@@ -103,6 +103,12 @@ export function PdfLayoutFetchProvider({
         return () => clearTimeout(timer);
     }, [updatePreview]);
 
+    useEffect(() => {
+        return () => {
+            if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+        };
+    }, []);
+
     // History Logic
     const saveHistory = useCallback(() => {
         setHistory(prev => {
