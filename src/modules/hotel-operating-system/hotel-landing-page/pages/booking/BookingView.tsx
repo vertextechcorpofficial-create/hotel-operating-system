@@ -157,7 +157,6 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = watch((values) => {
       if (Object.keys(values).length > 0) {
         sessionStorage.setItem("bookingFormDraft", JSON.stringify(values));

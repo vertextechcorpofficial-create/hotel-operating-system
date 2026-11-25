@@ -21,6 +21,7 @@ interface VerificationState {
 export default function BookingSuccessPage({ searchParams }: SuccessPageProps) {
   const resolvedParams = use(searchParams);
   const reservationId = typeof resolvedParams.reservationId === "string" ? resolvedParams.reservationId : "";
+  const token = typeof resolvedParams.token === "string" ? resolvedParams.token : undefined;
 
   const [state, setState] = useState<VerificationState>({
     status: "loading",
@@ -42,17 +43,24 @@ export default function BookingSuccessPage({ searchParams }: SuccessPageProps) {
     }
 
     const processVerification = async (): Promise<void> => {
-      const verification = await verifyAndFinalizeReservation(reservationId);
+      const verification = await verifyAndFinalizeReservation(reservationId, token);
 
       if (verification.success) {
+        const emailSentKey = `bookingEmailSent:${reservationId}`;
+        const alreadySent = typeof window !== "undefined" && sessionStorage.getItem(emailSentKey) === "1";
+
         setState({
           status: "confirmed",
           guestName: verification.guestName || "Valued Guest",
           email: verification.email || "",
           totalAmount: verification.totalAmount || 0,
           errorMessage: "",
-          emailSent: false,
+          emailSent: alreadySent,
         });
+
+        if (alreadySent) {
+          return;
+        }
 
         // TRIGGER TRANSITIONAL CONFIRMATION EMAIL
         try {
@@ -66,8 +74,10 @@ export default function BookingSuccessPage({ searchParams }: SuccessPageProps) {
           const emailData = await emailResponse.json();
           if (!emailResponse.ok) throw new Error(emailData.error);
 
-          console.log("Transactional check-in email routed successfully:", emailData.messageId);
-          
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(emailSentKey, "1");
+          }
+
           setState((prev) => ({
             ...prev,
             emailSent: true,
@@ -88,7 +98,7 @@ export default function BookingSuccessPage({ searchParams }: SuccessPageProps) {
     if (state.status === "loading") {
       void processVerification();
     }
-  }, [reservationId, state.status]);
+  }, [reservationId, token, state.status]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 py-12 bg-zinc-50/50">

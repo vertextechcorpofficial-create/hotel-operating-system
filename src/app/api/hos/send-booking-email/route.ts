@@ -1,8 +1,22 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import qrcode from 'qrcode';
+import { z } from 'zod';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+const sendEmailSchema = z.object({
+  reservationId: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]),
+});
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 interface ReservationPayload {
   id: number;
@@ -32,15 +46,14 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json() as { reservationId: string | number };
-    const { reservationId } = body;
-
-    if (!reservationId) {
+    const parsed = sendEmailSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing reservationId.' },
+        { error: 'Invalid reservationId.' },
         { status: 400 }
       );
     }
+    const reservationId = String(parsed.data.reservationId);
 
     if (!API_BASE_URL) {
       return NextResponse.json(
@@ -80,13 +93,21 @@ export async function POST(request: Request) {
       );
     }
 
+    const reservationStatus = (reservation.status || '').toLowerCase();
+    if (reservationStatus !== 'paid' && reservationStatus !== 'confirmed') {
+      return NextResponse.json(
+        { error: 'Confirmation email can only be sent for paid reservations.' },
+        { status: 400 }
+      );
+    }
+
     // 2. Resolve guest details from the database response
     const guest = reservation.guest_id;
-    const guestName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || 'Valued Guest';
+    const guestName = escapeHtml(`${guest.first_name || ''} ${guest.last_name || ''}`.trim() || 'Valued Guest');
     const email = guest.email;
     const totalAmount = Number(reservation.total_amount) || 0;
-    const checkIn = reservation.check_in || '';
-    const checkOut = reservation.check_out || '';
+    const checkIn = escapeHtml(reservation.check_in || '');
+    const checkOut = escapeHtml(reservation.check_out || '');
 
     if (!email) {
       return NextResponse.json(
@@ -96,7 +117,11 @@ export async function POST(request: Request) {
     }
 
     // 3. Define the routing URL path embedded within the QR code matrix
-    const verificationUrl = `http://localhost:3000/hotel-landing-page/booking/success?reservationId=${reservationId}`;
+    const rawHost = request.headers.get('host') || 'localhost:3000';
+    const safeHost = /^[a-zA-Z0-9.:-]+$/.test(rawHost) ? rawHost : 'localhost:3000';
+    const proto = request.headers.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    const baseAppUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') || `${proto}://${safeHost}`;
+    const verificationUrl = `${baseAppUrl}/hotel-landing-page/booking/success?reservationId=${reservationId}`;
 
     // 4. Generate the QR code as a Base64 Data URL string
     const qrCodeDataUrl = await qrcode.toDataURL(verificationUrl, {
@@ -172,7 +197,7 @@ export async function POST(request: Request) {
 
     // 7. Fire the email request payload
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Booking email sent to ${email} (Message ID: ${info.messageId})`);
+    console.log(`✅ Booking email sent for reservation #${reservationId} (Message ID: ${info.messageId})`);
     return NextResponse.json({ success: true, messageId: info.messageId });
 
   } catch (err: unknown) {

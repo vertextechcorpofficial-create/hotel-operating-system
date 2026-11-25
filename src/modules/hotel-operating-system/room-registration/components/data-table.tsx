@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Plus, Eye, Edit, Trash, Image as ImageIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoomForm } from "./room-form";
 import { toast } from "sonner";
@@ -281,6 +281,7 @@ export function RoomDataTable() {
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
                         <DialogTitle>View Room</DialogTitle>
+                        <DialogDescription>Room details and current status.</DialogDescription>
                     </DialogHeader>
                     {viewingRoom && (
                         <div className="space-y-4 mt-4">

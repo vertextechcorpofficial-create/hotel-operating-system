@@ -148,12 +148,14 @@ export default function HousekeepingDispatchModule() {
 
             {/* Filters & Queue */}
             <div className="space-y-4">
-                <div className="flex items-center gap-4 bg-muted/40 p-3 rounded-xl border">
-                    <Filter className="h-4 w-4 text-muted-foreground ml-1" />
-                    <span className="text-sm font-semibold text-muted-foreground">Filter Queue:</span>
+                <div className="flex flex-wrap items-center gap-3 md:gap-4 bg-muted/40 p-3 rounded-xl border">
+                    <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 text-muted-foreground ml-1" />
+                        <span className="text-sm font-semibold text-muted-foreground">Filter Queue:</span>
+                    </div>
                     
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[180px] bg-background">
+                        <SelectTrigger className="w-full sm:w-[180px] bg-background">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -166,7 +168,7 @@ export default function HousekeepingDispatchModule() {
                     </Select>
 
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="w-[180px] bg-background">
+                        <SelectTrigger className="w-full sm:w-[180px] bg-background">
                             <SelectValue placeholder="Task Type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -177,7 +179,7 @@ export default function HousekeepingDispatchModule() {
                     </Select>
 
                     <Select value={operationalFilter} onValueChange={setOperationalFilter}>
-                        <SelectTrigger className="w-[180px] bg-background">
+                        <SelectTrigger className="w-full sm:w-[180px] bg-background">
                             <SelectValue placeholder="Operational Status" />
                         </SelectTrigger>
                         <SelectContent>

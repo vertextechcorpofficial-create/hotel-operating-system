@@ -119,7 +119,7 @@ export const PdfSidebar: React.FC<PdfSidebarProps> = ({
     };
 
     return (
-        <div className="w-85 h-full border-r bg-white overflow-y-auto flex flex-col shadow-sm scroll-smooth scroll-pt-[120px]">
+        <div className="w-full md:w-85 md:h-full border-b md:border-b-0 md:border-r bg-white overflow-y-auto flex flex-col shadow-sm scroll-smooth scroll-pt-[120px] shrink-0">
             {/* Mode Selector */}
             <div className="p-4 border-b bg-slate-50 sticky top-0 z-10">
                 <div className="flex bg-slate-200 p-1 rounded-lg">
