@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { parseAdultsParam, parseChildrenParam } from "../../lib/url-params";
 import {
   Star,
   BedDouble,
@@ -29,8 +30,8 @@ function RoomDetailsViewInner({ room }: RoomDetailsViewProps) {
     searchParams.get("roomIds") || searchParams.get("roomId") || "";
   const checkinStr = searchParams.get("checkin") || "";
   const checkoutStr = searchParams.get("checkout") || "";
-  const adultsCount = Number(searchParams.get("adults") || 0);
-  const childrenCount = Number(searchParams.get("children") || 0);
+  const adultsCount = parseAdultsParam(searchParams.get("adults"), 2, 20);
+  const childrenCount = parseChildrenParam(searchParams.get("children"), 0, 20);
   const guestCount = adultsCount + childrenCount;
 
   const activeSelectedIds = useMemo(() => {
@@ -310,7 +311,7 @@ function RoomDetailsViewInner({ room }: RoomDetailsViewProps) {
                   </span>
                 </div>
                 <Link
-                  href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&adults=${searchParams.get("adults") ?? guestCount}&children=${searchParams.get("children") ?? 0}`}
+                  href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&adults=${adultsCount}&children=${childrenCount}`}
                   className="w-full py-3.5 bg-zinc-950 hover:bg-black text-white rounded-none text-[10px] font-bold text-center block uppercase tracking-[0.15em] border border-zinc-950 transition-colors"
                 >
                   Return to Booking Form

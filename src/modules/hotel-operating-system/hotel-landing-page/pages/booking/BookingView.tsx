@@ -12,6 +12,7 @@ import { BookingStatusModal, type ModalState } from "./components/BookingStatusM
 import { BookingSummaryCard } from "./components/BookingSummaryCard";
 import { BookingFormFields } from "./components/BookingFormFields";
 import { BookingFormValues, bookingSchema } from "./schema/booking.schema";
+import { parseAdultsParam, parseChildrenParam } from "../../lib/url-params";
 
 interface BookingTransactionPayload {
   roomIds: number[];
@@ -46,15 +47,27 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
   const checkinStr: string = searchParams.get("checkin") || "";
   const checkoutStr: string = searchParams.get("checkout") || "";
   
+  const rawAdults = searchParams.get("adults");
+  const rawChildren = searchParams.get("children");
+
   const adultsCount = useMemo<number>(() => {
-    const parsed = Number(searchParams.get("adults"));
-    return Number.isFinite(parsed) && parsed >= 1 ? Math.min(20, Math.floor(parsed)) : 2;
-  }, [searchParams]);
+    return parseAdultsParam(rawAdults, 2, 20);
+  }, [rawAdults]);
 
   const childrenCount = useMemo<number>(() => {
-    const parsed = Number(searchParams.get("children"));
-    return Number.isFinite(parsed) && parsed >= 0 ? Math.min(20, Math.floor(parsed)) : 0;
-  }, [searchParams]);
+    return parseChildrenParam(rawChildren, 0, 20);
+  }, [rawChildren]);
+
+  useEffect(() => {
+    const needsAdultsSync = rawAdults !== null && String(adultsCount) !== rawAdults;
+    const needsChildrenSync = rawChildren !== null && String(childrenCount) !== rawChildren;
+    if (needsAdultsSync || needsChildrenSync) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (needsAdultsSync) params.set("adults", String(adultsCount));
+      if (needsChildrenSync) params.set("children", String(childrenCount));
+      router.replace(`/hotel-landing-page/booking?${params.toString()}`, { scroll: false });
+    }
+  }, [rawAdults, rawChildren, adultsCount, childrenCount, searchParams, router]);
 
   const matchedRooms = useMemo<RoomData[]>(() => {
     if (!roomIdsRaw.trim()) return [];

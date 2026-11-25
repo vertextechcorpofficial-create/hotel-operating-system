@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { parseAdultsParam, parseChildrenParam } from "../../lib/url-params";
 import Link from "next/link";
 import {
   BedDouble,
@@ -45,8 +46,8 @@ function AllRoomsGridInner({ initialRooms }: AllRoomsGridProps) {
     searchParams.get("roomIds") || searchParams.get("roomId") || "";
   const checkinStr = searchParams.get("checkin") || "";
   const checkoutStr = searchParams.get("checkout") || "";
-  const adultsCount = Number(searchParams.get("adults") || 2);
-  const childrenCount = Number(searchParams.get("children") || 0);
+  const adultsCount = parseAdultsParam(searchParams.get("adults"), 2, 20);
+  const childrenCount = parseChildrenParam(searchParams.get("children"), 0, 20);
   const guestCount = adultsCount + childrenCount;
 
   const calculatedNights = useMemo(() => {
@@ -294,7 +295,7 @@ function AllRoomsGridInner({ initialRooms }: AllRoomsGridProps) {
 
           {/* Minimalist Structural Link Action */}
           <Link
-            href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&adults=${searchParams.get("adults") ?? guestCount}&children=${searchParams.get("children") ?? 0}`}
+            href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&adults=${adultsCount}&children=${childrenCount}`}
             className="text-[10px] font-bold uppercase tracking-[0.15em] text-white hover:text-zinc-300 transition-colors cursor-pointer shrink-0 border-b border-white pb-0.5 w-fit"
           >
             Return to Checkout Summary

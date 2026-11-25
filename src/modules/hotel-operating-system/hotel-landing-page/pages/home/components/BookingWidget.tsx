@@ -12,6 +12,7 @@ import {
   Check 
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { parseAdultsParam, parseChildrenParam, parseValidDateParam } from "../../../lib/url-params";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -52,13 +53,13 @@ function BookingWidgetInner({ dynamicBadges = [] }: BookingWidgetProps) {
 
   // Initialize states from URL if they exist to keep the UI synchronized
   const [checkin, setCheckin] = useState<Date | undefined>(
-    searchParams.get("checkin") ? new Date(searchParams.get("checkin")!) : undefined
+    parseValidDateParam(searchParams.get("checkin"))
   );
   const [checkout, setCheckout] = useState<Date | undefined>(
-    searchParams.get("checkout") ? new Date(searchParams.get("checkout")!) : undefined
+    parseValidDateParam(searchParams.get("checkout"))
   );
-  const [adults, setAdults] = useState(Number(searchParams.get("adults")) || 2);
-  const [children, setChildren] = useState(Number(searchParams.get("children")) || 0);
+  const [adults, setAdults] = useState(parseAdultsParam(searchParams.get("adults"), 2, 20));
+  const [children, setChildren] = useState(parseChildrenParam(searchParams.get("children"), 0, 20));
   const [selectedBadge, setSelectedBadge] = useState(searchParams.get("badge") || "all");
 
   const handleSearch = () => {

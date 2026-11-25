@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { parseAdultsParam, parseChildrenParam } from "../../lib/url-params";
 import {
   ChevronLeft,
   ChevronRight,
@@ -38,8 +39,8 @@ export function CalendarLayout({ rooms = [] }: { rooms?: CalendarRoom[] }) {
   const checkInDate = searchParams.get("checkin");
   const checkOutDate = searchParams.get("checkout");
   
-  const adultsCount = Number(searchParams.get("adults") ?? 2);
-  const childrenCount = Number(searchParams.get("children") ?? 0);
+  const rawAdults = searchParams.get("adults");
+  const rawChildren = searchParams.get("children");
   const roomIdsRaw = searchParams.get("roomIds") || "";
 
   // Dynamic Maximum Input Caps Engine
@@ -62,6 +63,9 @@ export function CalendarLayout({ rooms = [] }: { rooms?: CalendarRoom[] }) {
 
     return { maxAdults, maxChildren };
   }, [roomIdsRaw, rooms]);
+
+  const adultsCount = parseAdultsParam(rawAdults, 2, capacityCeilings.maxAdults);
+  const childrenCount = parseChildrenParam(rawChildren, 0, capacityCeilings.maxChildren);
 
   // Self-Correction Policy Hook
   useEffect(() => {

@@ -228,12 +228,6 @@ async function getAvailableRoomIds(typeId: number, checkin: string, checkout: st
     .filter((room) => !bookedRoomIds.has(room.id))
     .map((room) => room.id);
 
-  console.log("--- DEBUG getAvailableRoomIds ---");
-  console.log("bookedItems blocking:", JSON.stringify(bookedItems));
-  console.log("allRooms for type:", JSON.stringify(allRooms));
-  console.log("availableIds:", availableIds);
-  console.log("---------------------------------");
-
   return availableIds;
 }
 
