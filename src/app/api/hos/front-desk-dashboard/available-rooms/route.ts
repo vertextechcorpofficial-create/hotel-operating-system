@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { decodeJwtPayload, COOKIE_NAME } from '@/lib/auth-utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
 
@@ -16,6 +18,13 @@ const MAX_RANGE_NIGHTS = 366;
  */
 export async function GET(request: Request) {
     try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get(COOKIE_NAME)?.value;
+        const payload = token ? decodeJwtPayload(token) : null;
+        if (!payload?.sub) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+        }
+
         if (!API_BASE_URL) {
             return NextResponse.json({ error: 'Missing API configuration.' }, { status: 500 });
         }

@@ -48,12 +48,12 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
   
   const adultsCount = useMemo<number>(() => {
     const parsed = Number(searchParams.get("adults"));
-    return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 2;
+    return Number.isFinite(parsed) && parsed >= 1 ? Math.min(20, Math.floor(parsed)) : 2;
   }, [searchParams]);
 
   const childrenCount = useMemo<number>(() => {
     const parsed = Number(searchParams.get("children"));
-    return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0;
+    return Number.isFinite(parsed) && parsed >= 0 ? Math.min(20, Math.floor(parsed)) : 0;
   }, [searchParams]);
 
   const matchedRooms = useMemo<RoomData[]>(() => {

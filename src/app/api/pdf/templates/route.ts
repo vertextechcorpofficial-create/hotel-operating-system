@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { decodeJwtPayload, COOKIE_NAME } from '@/lib/auth-utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const STATIC_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
+
+async function isAuthenticated(): Promise<boolean> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    const payload = token ? decodeJwtPayload(token) : null;
+    return Boolean(payload?.sub);
+}
 
 /**
  * PDF Templates Proxy API
@@ -9,6 +18,10 @@ const STATIC_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
  */
 export async function GET() {
     try {
+        if (!(await isAuthenticated())) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+        }
+
         const response = await fetch(`${API_BASE_URL}/items/pdf_templates`, {
             method: 'GET',
             headers: {
@@ -28,6 +41,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        if (!(await isAuthenticated())) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+        }
+
         const body = await request.json();
         const response = await fetch(`${API_BASE_URL}/items/pdf_templates`, {
             method: 'POST',

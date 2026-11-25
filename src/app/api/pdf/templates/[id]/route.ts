@@ -1,14 +1,30 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { decodeJwtPayload, COOKIE_NAME } from '@/lib/auth-utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const STATIC_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
+
+async function isAuthenticated(): Promise<boolean> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    const payload = token ? decodeJwtPayload(token) : null;
+    return Boolean(payload?.sub);
+}
 
 export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        if (!(await isAuthenticated())) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+        }
+
         const { id } = await params;
+        if (!/^\d+$/.test(id)) {
+            return NextResponse.json({ error: 'Invalid template ID.' }, { status: 400 });
+        }
         const body = await request.json();
         const response = await fetch(`${API_BASE_URL}/items/pdf_templates/${id}`, {
             method: 'PATCH',
@@ -33,7 +49,14 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        if (!(await isAuthenticated())) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+        }
+
         const { id } = await params;
+        if (!/^\d+$/.test(id)) {
+            return NextResponse.json({ error: 'Invalid template ID.' }, { status: 400 });
+        }
         const response = await fetch(`${API_BASE_URL}/items/pdf_templates/${id}`, {
             method: 'DELETE',
             headers: {
