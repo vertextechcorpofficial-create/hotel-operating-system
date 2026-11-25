@@ -16,6 +16,7 @@ interface BookingSummaryCardProps {
   baseSubtotal: number;
   totalInvoiceGross: number;
   isSubmitting: boolean;
+  isSubmitDisabled?: boolean;
 }
 
 export function BookingSummaryCard({
@@ -32,6 +33,7 @@ export function BookingSummaryCard({
   baseSubtotal,
   totalInvoiceGross,
   isSubmitting,
+  isSubmitDisabled = false,
 }: BookingSummaryCardProps) {
   return (
     <div className="lg:col-span-5 space-y-6">
@@ -122,8 +124,8 @@ export function BookingSummaryCard({
 
         <button 
           type="submit" 
-          disabled={isSubmitting} 
-          className="w-full py-4 bg-zinc-950 hover:bg-black disabled:bg-zinc-100 disabled:text-zinc-400 text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-sm shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+          disabled={isSubmitting || isSubmitDisabled} 
+          className="w-full py-4 bg-zinc-950 hover:bg-black disabled:bg-zinc-100 disabled:text-zinc-400 disabled:cursor-not-allowed text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-sm shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
         >
           <CreditCard size={13} />
           {isSubmitting ? "Processing Transaction..." : "Authorize Agreement & Pay"}

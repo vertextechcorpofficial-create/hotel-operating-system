@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UploadCloud, X } from "lucide-react";
 
@@ -9,10 +9,23 @@ interface ImageUploadProps {
     onChange: (value: string) => void;
 }
 
+function resolvePreviewUrl(val?: string): string | null {
+    if (!val) return null;
+    if (val.startsWith("http") || val.startsWith("data:") || val.startsWith("/")) {
+        return val;
+    }
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    return baseUrl ? `${baseUrl}/assets/${val}` : null;
+}
+
 export function ImageUpload({ value, onChange }: ImageUploadProps) {
-    const [preview, setPreview] = useState<string | null>(value || null);
+    const [preview, setPreview] = useState<string | null>(() => resolvePreviewUrl(value));
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setPreview(resolvePreviewUrl(value));
+    }, [value]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

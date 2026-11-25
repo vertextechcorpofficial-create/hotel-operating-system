@@ -35,8 +35,10 @@ export async function GET() {
 
             if (isUuid) {
                 try {
-                    const assetUrl = `${API_BASE_URL}/assets/${logoUuid}${staticToken ? `?access_token=${staticToken}` : ''}`;
-                    const imgRes = await fetch(assetUrl);
+                    const assetUrl = `${API_BASE_URL}/assets/${logoUuid}`;
+                    const imgRes = await fetch(assetUrl, {
+                        headers: staticToken ? { 'Authorization': `Bearer ${staticToken}` } : {},
+                    });
 
                     if (imgRes.ok) {
                         const contentType = imgRes.headers.get('content-type') || 'image/png';

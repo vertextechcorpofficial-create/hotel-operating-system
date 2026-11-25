@@ -160,7 +160,8 @@ export function RoomTypeForm({ open, onOpenChange, initialData, onSuccess }: Roo
                                                 type="number" 
                                                 step="0.01" 
                                                 {...field} 
-                                                onChange={(e) => field.onChange(e.target.valueAsNumber)} 
+                                                value={Number.isNaN(field.value) ? "" : (field.value ?? "")}
+                                                onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))} 
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -198,7 +199,8 @@ export function RoomTypeForm({ open, onOpenChange, initialData, onSuccess }: Roo
                                             <Input 
                                                 type="number" 
                                                 {...field} 
-                                                onChange={(e) => field.onChange(e.target.valueAsNumber)} 
+                                                value={Number.isNaN(field.value) ? "" : (field.value ?? "")}
+                                                onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))} 
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -215,7 +217,8 @@ export function RoomTypeForm({ open, onOpenChange, initialData, onSuccess }: Roo
                                             <Input 
                                                 type="number" 
                                                 {...field} 
-                                                onChange={(e) => field.onChange(e.target.valueAsNumber)} 
+                                                value={Number.isNaN(field.value) ? "" : (field.value ?? "")}
+                                                onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))} 
                                             />
                                         </FormControl>
                                         <FormMessage />

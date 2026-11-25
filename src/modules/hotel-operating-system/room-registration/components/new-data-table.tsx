@@ -244,9 +244,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         {searchKey && (
-          <div className="max-w-sm w-full">
+          <div className="w-full sm:max-w-sm">
             <SearchInput
               placeholder={`Search ${searchKey.replace(/_/g, " ")}...`}
               initialValue={
@@ -258,7 +258,7 @@ export function DataTable<TData, TValue>({
           </div>
         )}
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto w-full sm:w-auto">
           {actionComponent}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -365,7 +365,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between px-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2">
         <div className="flex-1 text-sm text-muted-foreground font-medium">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <span>
@@ -375,7 +375,7 @@ export function DataTable<TData, TValue>({
           )}
           Showing {table.getFilteredRowModel().rows.length === 0 ? 0 : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of {table.getFilteredRowModel().rows.length} entries
         </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">
             <p className="text-sm font-bold">Rows per page</p>
             <Select

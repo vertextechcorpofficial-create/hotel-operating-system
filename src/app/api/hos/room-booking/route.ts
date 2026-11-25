@@ -107,25 +107,52 @@ export async function POST(request: Request) {
         const basePrice = parseFloat(typeData.data?.price) || 0;
 
         // ──────────────────────────────────────────────
-        // 3. Calculate nights
+        // 3. Calculate nights (date-only UTC math to avoid timezone shifts)
         // ──────────────────────────────────────────────
-        const startDate = new Date(check_in_date);
-        const endDate = new Date(check_out_date);
-        const nightDates: string[] = [];
-
-        const current = new Date(startDate);
-        const getManilaDateString = (d: Date = new Date()) => {
-            const manilaDate = new Date(d.getTime() + 8 * 60 * 60 * 1000);
-            return manilaDate.toISOString().replace('Z', '').split('T')[0];
+        const parseDateOnlyUtc = (dateStr: string): number => {
+            const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+            if (!y || !m || !d) return NaN;
+            return Date.UTC(y, m - 1, d);
         };
-        
-        while (current < endDate) {
-            nightDates.push(getManilaDateString(current));
-            current.setDate(current.getDate() + 1);
+
+        const startMs = parseDateOnlyUtc(check_in_date);
+        const endMs = parseDateOnlyUtc(check_out_date);
+        if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) {
+            return NextResponse.json({ error: 'Check-out must be after check-in.' }, { status: 400 });
+        }
+
+        const nightDates: string[] = [];
+        for (let ms = startMs; ms < endMs; ms += 86_400_000) {
+            nightDates.push(new Date(ms).toISOString().split('T')[0]);
         }
 
         if (nightDates.length === 0) {
             return NextResponse.json({ error: 'Check-out must be after check-in.' }, { status: 400 });
+        }
+
+        // 3b. Verify room availability for the requested dates when a physical room is assigned
+        if (room_id) {
+            const conflictFilter = encodeURIComponent(JSON.stringify({
+                _and: [
+                    { room_id: { _eq: room_id } },
+                    { night_date: { _in: nightDates } },
+                    { reservation_id: { status: { _nin: ['Cancelled', 'Checked-Out'] } } },
+                ],
+            }));
+            const conflictRes = await fetch(
+                `${API_BASE_URL}/items/reservation_items_hos?filter=${conflictFilter}&fields=id,night_date&limit=1`,
+                { headers }
+            );
+            if (!conflictRes.ok) {
+                return NextResponse.json({ error: 'Failed to verify room availability.' }, { status: 500 });
+            }
+            const conflictData = await conflictRes.json();
+            if ((conflictData.data || []).length > 0) {
+                return NextResponse.json(
+                    { error: 'Selected room is already booked for one or more nights in this date range.' },
+                    { status: 409 }
+                );
+            }
         }
 
         const totalAmount = basePrice * nightDates.length;

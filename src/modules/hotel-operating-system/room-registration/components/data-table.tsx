@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DataTable } from "./new-data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -204,21 +204,23 @@ export function RoomDataTable() {
         },
     ];
 
-    const filteredData = data.filter((room) => {
-        const typeIdStr = typeof room.type_id === 'object' && room.type_id !== null ? room.type_id.id?.toString() : room.type_id?.toString();
-        const opStatusIdStr = typeof room.operational_status_id === 'object' && room.operational_status_id !== null ? room.operational_status_id.id?.toString() : room.operational_status_id?.toString();
-        const hkStatusIdStr = typeof room.housekeeping_status_id === 'object' && room.housekeeping_status_id !== null ? room.housekeeping_status_id.id?.toString() : room.housekeeping_status_id?.toString();
+    const filteredData = useMemo(() => {
+        return data.filter((room) => {
+            const typeIdStr = typeof room.type_id === 'object' && room.type_id !== null ? room.type_id.id?.toString() : room.type_id?.toString();
+            const opStatusIdStr = typeof room.operational_status_id === 'object' && room.operational_status_id !== null ? room.operational_status_id.id?.toString() : room.operational_status_id?.toString();
+            const hkStatusIdStr = typeof room.housekeeping_status_id === 'object' && room.housekeeping_status_id !== null ? room.housekeeping_status_id.id?.toString() : room.housekeeping_status_id?.toString();
 
-        if (filterType !== "all" && typeIdStr !== filterType) return false;
-        if (filterOpStatus !== "all" && opStatusIdStr !== filterOpStatus) return false;
-        if (filterHkStatus !== "all" && hkStatusIdStr !== filterHkStatus) return false;
-        return true;
-    });
+            if (filterType !== "all" && typeIdStr !== filterType) return false;
+            if (filterOpStatus !== "all" && opStatusIdStr !== filterOpStatus) return false;
+            if (filterHkStatus !== "all" && hkStatusIdStr !== filterHkStatus) return false;
+            return true;
+        });
+    }, [data, filterType, filterOpStatus, filterHkStatus]);
 
     const actionComponent = (
         <>
             <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,7 +231,7 @@ export function RoomDataTable() {
                 </SelectContent>
             </Select>
             <Select value={filterOpStatus} onValueChange={setFilterOpStatus}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue placeholder="Op Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -240,7 +242,7 @@ export function RoomDataTable() {
                 </SelectContent>
             </Select>
             <Select value={filterHkStatus} onValueChange={setFilterHkStatus}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue placeholder="HK Status" />
                 </SelectTrigger>
                 <SelectContent>

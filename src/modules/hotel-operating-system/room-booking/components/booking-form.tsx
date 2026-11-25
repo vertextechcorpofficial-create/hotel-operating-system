@@ -153,7 +153,7 @@ export function BookingForm() {
                 const guest = result.data;
                 setFirstName(guest.first_name || "");
                 setLastName(guest.last_name || "");
-                setPhone(guest.phone_number || "");
+                setPhone(guest.contact_number || guest.phone_number || "");
                 setIdPassport(guest.id_passport_number || "");
                 setLookupStatus("found");
                 toast.success(`Welcome back! Found existing profile for ${guest.first_name}.`);
@@ -220,7 +220,7 @@ export function BookingForm() {
             return;
         }
 
-        if (isWalkIn && selectedRoomId === "unassigned") {
+        if (isWalkIn && (!selectedRoomId || selectedRoomId === "unassigned" || isNaN(parseInt(selectedRoomId, 10)))) {
             toast.error("Walk-in bookings require a physical room assignment.");
             return;
         }
@@ -249,7 +249,7 @@ export function BookingForm() {
                 check_out_date: checkOutDate,
                 booking_source: bookingSource,
                 room_type_id: parseInt(selectedRoomTypeId, 10),
-                room_id: selectedRoomId === "unassigned" ? null : parseInt(selectedRoomId, 10),
+                room_id: !selectedRoomId || selectedRoomId === "unassigned" ? null : parseInt(selectedRoomId, 10),
                 is_walk_in: isWalkIn,
                 payment: undefined, // Handled separately below to split room fee and deposit
             };
@@ -271,14 +271,19 @@ export function BookingForm() {
             // Trigger Reservation Confirmation Email via HOS API route
             if (reservationId) {
                 try {
-                    await fetch("/api/hos/send-booking-email", {
+                    const emailRes = await fetch("/api/hos/send-booking-email", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ reservationId: reservationId.toString() }),
                     });
-                    toast.success("Confirmation email sent to guest successfully!");
+                    if (emailRes.ok) {
+                        toast.success("Confirmation email sent to guest successfully!");
+                    } else {
+                        toast.warning("Booking saved, but confirmation email could not be sent.");
+                    }
                 } catch (emailError) {
                     console.error("Failed to send reservation email:", emailError);
+                    toast.warning("Booking saved, but confirmation email could not be sent.");
                 }
             }
 
@@ -625,14 +630,14 @@ export function BookingForm() {
                                     <div className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
                                         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                                         <span>
-                                            Walk-ins must be assigned a physical room immediately. The room will be set to **Occupied** on save.
+                                            Walk-ins must be assigned a physical room immediately. The room will be set to <strong>Occupied</strong> on save.
                                         </span>
                                     </div>
                                 ) : (
                                     <div className="flex items-start gap-2 text-xs text-blue-800 dark:text-blue-400 bg-blue-500/10 p-2.5 rounded-lg border border-blue-500/20">
                                         <Search className="h-4 w-4 shrink-0 mt-0.5" />
                                         <span>
-                                            Advance bookings reserve the **Room Type**, not the physical room. Assigning a specific room is optional.
+                                            Advance bookings reserve the <strong>Room Type</strong>, not the physical room. Assigning a specific room is optional.
                                         </span>
                                     </div>
                                 )}
@@ -841,7 +846,7 @@ export function BookingForm() {
                             </div>
 
                             <p className="text-[10px] text-muted-foreground text-center italic leading-relaxed pt-2">
-                                Submitting this form will push data to Directus `guests`, `reservations`, and `reservation_items` collections.
+                                Please verify guest details and stay dates before saving the reservation.
                             </p>
                         </CardContent>
                     </Card>

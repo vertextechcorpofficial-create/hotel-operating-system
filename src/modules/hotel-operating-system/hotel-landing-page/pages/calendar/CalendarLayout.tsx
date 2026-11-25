@@ -25,7 +25,10 @@ export function CalendarLayout({ rooms = [] }: { rooms?: CalendarRoom[] }) {
     capacity: 20,
     bookings: []
   });
-  const [leftMonth, setLeftMonth] = useState<Date>(new Date(2026, 5, 1));
+  const [leftMonth, setLeftMonth] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [hoverDate, setHoverDate] = useState<string | null>(null);
 
   const router = useRouter();

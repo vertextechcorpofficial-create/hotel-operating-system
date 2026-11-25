@@ -4,9 +4,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function GET(request: Request) {
   try {
+    const staticToken = process.env.DIRECTUS_STATIC_TOKEN;
     const authHeader = request.headers.get('authorization');
-    // Simple protection: requiring the static token to trigger this cron
-    if (authHeader !== `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`) {
+    // Require a configured token and matching Bearer header
+    if (!staticToken || authHeader !== `Bearer ${staticToken}`) {
       return NextResponse.json({ error: 'Unauthorized cleanup request.' }, { status: 401 });
     }
 
@@ -14,15 +15,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing API configuration.' }, { status: 500 });
     }
 
-    const staticToken = process.env.DIRECTUS_STATIC_TOKEN;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(staticToken ? { Authorization: `Bearer ${staticToken}` } : {}),
+      Authorization: `Bearer ${staticToken}`,
     };
 
-    const d = new Date(Date.now() - 15 * 60 * 1000);
-    const manilaDate = new Date(d.getTime() + 8 * 60 * 60 * 1000);
-    const fifteenMinsAgo = manilaDate.toISOString().replace('Z', '');
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
     // 1. Find all pending reservations older than 15 minutes
     const filter = {

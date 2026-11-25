@@ -121,9 +121,15 @@ export function GuestFolioSheet({
         }
     }, [open, reservationId, fetchFolio]);
 
-    // Calculations
+    // Calculations (exclude incidental deposit holds/refunds from room-bill balance)
+    const isDepositEntry = (notes?: string | null) =>
+        notes === "Incidental Deposit Hold" ||
+        notes === "Incidental Deposit Refund" ||
+        notes === "Deposit Refunded";
     const totalCharges = charges.reduce((sum, c) => sum + parseFloat(String(c.amount)), 0);
-    const totalPayments = payments.reduce((sum, p) => sum + parseFloat(String(p.amount)), 0);
+    const totalPayments = payments
+        .filter((p) => !isDepositEntry(p.notes))
+        .reduce((sum, p) => sum + parseFloat(String(p.amount)), 0);
     const balance = totalCharges - totalPayments;
     const isBalanceClear = Math.abs(balance) < 0.01;
     const depositHoldPayment = payments.find(p => p.notes === "Incidental Deposit Hold");
@@ -228,7 +234,11 @@ export function GuestFolioSheet({
         }
     };
 
-    const activeDeposit = payments.find(p => p.notes === "Incidental Deposit Hold" && !payments.some(refund => refund.notes === "Deposit Refunded"));
+    const activeDeposit = payments.find(
+        (p) =>
+            p.notes === "Incidental Deposit Hold" &&
+            !payments.some((refund) => refund.notes === "Deposit Refunded" || refund.notes === "Incidental Deposit Refund")
+    );
 
     // Check-out with balance protection and deposit resolution
     const handleFinalizeCheckout = async () => {

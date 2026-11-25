@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 
 interface CalendarReservationItem {
     id: string | number;
+    night_date?: string;
     room_id?: string | number | null;
     reservation_id?: {
         id: string | number;
         status: string;
         check_in: string;
         check_out: string;
+        total_amount?: number | string | null;
         guest_id?: {
             first_name: string;
             last_name: string;
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
             // 3. Operational Statuses
             fetch(`${API_BASE_URL}/items/operational_statuses?limit=-1`, { headers }),
             // 4. Reservation Items (within date range) with Joins
-            fetch(`${API_BASE_URL}/items/reservation_items_hos?limit=-1&fields=id,night_date,room_id,reservation_id.id,reservation_id.status,reservation_id.check_in,reservation_id.check_out,reservation_id.guest_id.first_name,reservation_id.guest_id.last_name&filter=${encodeURIComponent(JSON.stringify({
+            fetch(`${API_BASE_URL}/items/reservation_items_hos?limit=-1&fields=id,night_date,room_id,reservation_id.id,reservation_id.status,reservation_id.check_in,reservation_id.check_out,reservation_id.total_amount,reservation_id.guest_id.first_name,reservation_id.guest_id.last_name&filter=${encodeURIComponent(JSON.stringify({
                 _and: [
                     { reservation_id: { check_in: { _lte: end } } },
                     { reservation_id: { check_out: { _gte: start } } }
@@ -80,27 +82,92 @@ export async function GET(request: Request) {
         const itemsData = await itemsRes.json();
         const rawTasksData = await tasksRes.json();
 
-        // Process reservation items into unique reservations per room
-        const rawItems = itemsData.data || [];
-        const reservationsMap = new Map();
-        
+        // Build room -> price lookup for fallback nightly rate
+        const roomTypePriceMap = new Map<number, number>();
+        for (const t of (typesData.data || []) as Array<{ id: number; price?: number | string }>) {
+            roomTypePriceMap.set(t.id, parseFloat(String(t.price ?? 0)) || 0);
+        }
+        const roomPriceMap = new Map<number, number>();
+        for (const r of (roomsData.data || []) as Array<{ id: number; type_id?: number }>) {
+            if (r.type_id != null) {
+                roomPriceMap.set(r.id, roomTypePriceMap.get(r.type_id) ?? 0);
+            }
+        }
+
+        // Process reservation items into unique reservations per room (excluding cancelled/no-show)
+        const rawItems = (itemsData.data || []) as CalendarReservationItem[];
+        const reservationsMap = new Map<string, {
+            id: string | number;
+            check_in_date: string;
+            check_out_date: string;
+            status: string;
+            guest_id?: { first_name: string; last_name: string } | null;
+            room_id: string | number | null;
+            locked_price: number;
+            minNight?: string;
+            maxNight?: string;
+        }>();
+
         rawItems.forEach((item: CalendarReservationItem) => {
             const resInfo = item.reservation_id;
-            if (resInfo) {
-                const key = `${resInfo.id}_${item.room_id || 'unassigned'}`;
-                if (!reservationsMap.has(key)) {
-                    reservationsMap.set(key, {
-                        id: resInfo.id,
-                        check_in_date: resInfo.check_in,
-                        check_out_date: resInfo.check_out,
-                        status: resInfo.status,
-                        guest_id: resInfo.guest_id,
-                        room_id: item.room_id,
-                    });
-                }
+            if (!resInfo) return;
+            const statusLower = (resInfo.status || '').toLowerCase();
+            if (statusLower === 'cancelled' || statusLower === 'no-show') return;
+
+            const roomId = item.room_id ?? null;
+            const key = `${resInfo.id}_${roomId ?? 'unassigned'}`;
+            const night = item.night_date?.split('T')[0];
+
+            const existing = reservationsMap.get(key);
+            if (!existing) {
+                const startMs = Date.parse(resInfo.check_in);
+                const endMs = Date.parse(resInfo.check_out);
+                const totalNights = !isNaN(startMs) && !isNaN(endMs) && endMs > startMs
+                    ? Math.round((endMs - startMs) / 86_400_000)
+                    : 1;
+                const totalAmt = parseFloat(String(resInfo.total_amount ?? 0));
+                const roomNumId = roomId != null ? Number(roomId) : NaN;
+                const nightlyRate = !isNaN(totalAmt) && totalAmt > 0
+                    ? Math.round((totalAmt / totalNights) * 100) / 100
+                    : (!isNaN(roomNumId) ? (roomPriceMap.get(roomNumId) ?? 0) : 0);
+
+                reservationsMap.set(key, {
+                    id: resInfo.id,
+                    check_in_date: resInfo.check_in,
+                    check_out_date: resInfo.check_out,
+                    status: resInfo.status,
+                    guest_id: resInfo.guest_id,
+                    room_id: roomId,
+                    locked_price: nightlyRate,
+                    minNight: night,
+                    maxNight: night,
+                });
+            } else if (night) {
+                if (!existing.minNight || night < existing.minNight) existing.minNight = night;
+                if (!existing.maxNight || night > existing.maxNight) existing.maxNight = night;
             }
         });
-        const uniqueReservations = Array.from(reservationsMap.values());
+
+        const uniqueReservations = Array.from(reservationsMap.values()).map((r) => {
+            let checkIn = r.check_in_date;
+            let checkOut = r.check_out_date;
+            if (r.minNight && r.maxNight) {
+                checkIn = r.minNight;
+                const nextDayMs = Date.parse(`${r.maxNight}T00:00:00Z`) + 86_400_000;
+                if (!isNaN(nextDayMs)) {
+                    checkOut = new Date(nextDayMs).toISOString().split('T')[0];
+                }
+            }
+            return {
+                id: r.id,
+                check_in_date: checkIn,
+                check_out_date: checkOut,
+                status: r.status,
+                guest_id: r.guest_id,
+                room_id: r.room_id,
+                locked_price: r.locked_price,
+            };
+        });
 
         // Filter blocking tasks locally to avoid Directus schema sync issues with newly added MySQL fields
         // Fallback: If blocks_availability is entirely missing from payload, assume Maintenance tasks block availability.

@@ -209,7 +209,7 @@ export function ExtendStayDialog({ open, onOpenChange, departure, onSuccess }: E
                                 <div className="flex items-start gap-2.5 text-xs text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/20">
                                     <Check className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                                     <span>
-                                        **Room {checkData.currentRoomNumber}** is available! The guest can stay in their current room for the entire extended stay.
+                                        <strong>Room {checkData.currentRoomNumber}</strong> is available! The guest can stay in their current room for the entire extended stay.
                                     </span>
                                 </div>
                             ) : (
@@ -218,7 +218,7 @@ export function ExtendStayDialog({ open, onOpenChange, departure, onSuccess }: E
                                     <div className="flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20">
                                         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                                         <span>
-                                            **Room {checkData.currentRoomNumber}** is booked during these dates. A **Room Move** is required.
+                                            <strong>Room {checkData.currentRoomNumber}</strong> is booked during these dates. A <strong>Room Move</strong> is required.
                                         </span>
                                     </div>
 

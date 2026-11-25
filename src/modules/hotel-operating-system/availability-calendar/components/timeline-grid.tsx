@@ -45,7 +45,7 @@ export function TimelineGrid({ data, startDate, numDays }: TimelineGridProps) {
         return (
             <div key={key} className="flex border-b border-muted/50 group/row hover:bg-muted/10 transition-colors">
                 {/* Y-Axis Label (Sticky Left) */}
-                <div className="w-[200px] shrink-0 border-r border-muted/50 p-3 sticky left-0 z-20 bg-card group-hover/row:bg-muted/30 transition-colors flex flex-col justify-center">
+                <div className="w-[130px] sm:w-[200px] shrink-0 border-r border-muted/50 p-3 sticky left-0 z-20 bg-card group-hover/row:bg-muted/30 transition-colors flex flex-col justify-center">
                     <span className="font-semibold text-sm truncate">{label}</span>
                     {subLabel && <span className="text-xs text-muted-foreground truncate">{subLabel}</span>}
                 </div>
@@ -186,7 +186,11 @@ export function TimelineGrid({ data, startDate, numDays }: TimelineGridProps) {
                                             <span className="text-muted-foreground">Check-Out:</span>
                                             <span>{resInfo?.check_out_date}</span>
                                             <span className="text-muted-foreground">Locked Rate:</span>
-                                            <span>₱{Number(resInfo.locked_price).toLocaleString()}</span>
+                                            <span>
+                                                {Number.isFinite(Number(resInfo.locked_price))
+                                                    ? `₱${Number(resInfo.locked_price).toLocaleString()}`
+                                                    : "N/A"}
+                                            </span>
                                         </div>
                                     </TooltipContent>
                                 </Tooltip>
@@ -203,7 +207,7 @@ export function TimelineGrid({ data, startDate, numDays }: TimelineGridProps) {
             <div className="w-full min-w-max">
                 {/* Header Row (Dates) */}
                 <div className="flex border-b bg-muted/10 sticky top-0 z-30">
-                    <div className="w-[200px] shrink-0 border-r p-3 sticky left-0 z-40 bg-card/95 backdrop-blur-md shadow-[1px_0_5px_-2px_rgba(0,0,0,0.1)] flex items-end">
+                    <div className="w-[130px] sm:w-[200px] shrink-0 border-r p-3 sticky left-0 z-40 bg-card/95 backdrop-blur-md shadow-[1px_0_5px_-2px_rgba(0,0,0,0.1)] flex items-end">
                         <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Room / Date</span>
                     </div>
                     {dateCols.map((d) => {
@@ -238,7 +242,7 @@ export function TimelineGrid({ data, startDate, numDays }: TimelineGridProps) {
                         <div key={type.id}>
                             {/* Room Type Group Header */}
                             <div className="flex bg-muted/40 border-b border-muted/60">
-                                <div className="w-[200px] shrink-0 border-r border-muted/50 px-3 py-2 sticky left-0 z-30 bg-muted/95 backdrop-blur-md">
+                                <div className="w-[130px] sm:w-[200px] shrink-0 border-r border-muted/50 px-3 py-2 sticky left-0 z-30 bg-muted/95 backdrop-blur-md">
                                     <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
                                         {type.name}
                                     </span>

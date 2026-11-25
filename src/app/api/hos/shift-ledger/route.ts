@@ -114,8 +114,9 @@ export async function GET() {
 
                 // Recognized revenue = Settled or Completed payments
                 if (status === 'settled' || status === 'completed') {
-                    // Check if it's a liability hold (incidental deposit)
-                    if (p.notes && p.notes.toLowerCase().includes('incidental deposit')) {
+                    // Check if it's a liability hold or refund (incidental deposit / deposit refunded)
+                    const notesLower = (p.notes || '').toLowerCase();
+                    if (notesLower.includes('incidental deposit') || notesLower.includes('deposit refunded')) {
                         liabilities += amt;
                     } else {
                         recognizedRevenue += amt;
@@ -202,9 +203,10 @@ export async function POST(request: Request) {
         // ---- OPEN SHIFT ----
         if (action === 'open') {
             const { starting_cash } = body;
+            const parsedStartingCash = parseFloat(starting_cash);
 
-            if (starting_cash == null || isNaN(parseFloat(starting_cash))) {
-                return NextResponse.json({ error: 'starting_cash is required.' }, { status: 400 });
+            if (starting_cash == null || isNaN(parsedStartingCash) || parsedStartingCash < 0) {
+                return NextResponse.json({ error: 'starting_cash must be a valid non-negative number.' }, { status: 400 });
             }
 
             // Check for existing open shift
@@ -223,7 +225,7 @@ export async function POST(request: Request) {
             const shiftPayload = {
                 user_id: userId,
                 opened_at: new Date().toISOString(),
-                starting_cash: parseFloat(starting_cash),
+                starting_cash: parsedStartingCash,
                 status: 'Open',
                 created_by: userId,
                 updated_by: userId,
@@ -247,17 +249,58 @@ export async function POST(request: Request) {
 
         // ---- CLOSE SHIFT ----
         if (action === 'close') {
-            const { shiftId, actual_cash, expected_cash, resolved_by, resolution_notes } = body;
+            const { shiftId, actual_cash, resolved_by, resolution_notes } = body;
 
             if (!shiftId) {
                 return NextResponse.json({ error: 'shiftId is required.' }, { status: 400 });
             }
-            if (actual_cash == null) {
-                return NextResponse.json({ error: 'actual_cash is required.' }, { status: 400 });
+            const actualCash = parseFloat(actual_cash);
+            if (actual_cash == null || isNaN(actualCash) || actualCash < 0) {
+                return NextResponse.json({ error: 'actual_cash must be a valid non-negative number.' }, { status: 400 });
             }
 
-            const actualCash = parseFloat(actual_cash);
-            const expCash = parseFloat(expected_cash) || 0;
+            // Fetch shift on server and recompute expected_cash from shift payments
+            const shiftLookupRes = await fetch(
+                `${API_BASE_URL}/items/shifts_hos/${shiftId}?fields=id,opened_at,starting_cash,status`,
+                { headers }
+            );
+            if (!shiftLookupRes.ok) {
+                return NextResponse.json({ error: 'Shift not found.' }, { status: 404 });
+            }
+            const shiftRow = (await shiftLookupRes.json()).data;
+            if (!shiftRow || shiftRow.status !== 'Open') {
+                return NextResponse.json({ error: 'Shift is not open.' }, { status: 409 });
+            }
+
+            let expCash = parseFloat(shiftRow.starting_cash) || 0;
+            const shiftPayFilter = encodeURIComponent(JSON.stringify({
+                payment_date: { _gte: shiftRow.opened_at },
+            }));
+            const shiftPayRes = await fetch(
+                `${API_BASE_URL}/items/payments_hos?filter=${shiftPayFilter}&limit=-1&fields=amount,payment_method,status`,
+                { headers }
+            );
+            if (!shiftPayRes.ok) {
+                return NextResponse.json({ error: 'Failed to calculate expected cash.' }, { status: 500 });
+            }
+            const shiftPayments = ((await shiftPayRes.json()).data || []) as {
+                amount: number;
+                payment_method: string;
+                status: string;
+            }[];
+            for (const p of shiftPayments) {
+                const amt = parseFloat(String(p.amount)) || 0;
+                const method = (p.payment_method || '').toUpperCase();
+                const st = (p.status || '').toLowerCase();
+                if (method === 'CASH') {
+                    if (st === 'settled' || st === 'completed' || st === 'liability held') {
+                        expCash += amt;
+                    } else if (st === 'refunded' || st === 'voided') {
+                        expCash -= amt;
+                    }
+                }
+            }
+            expCash = Math.round(expCash * 100) / 100;
             const variance = Math.round((actualCash - expCash) * 100) / 100;
 
             const closePayload: Record<string, unknown> = {

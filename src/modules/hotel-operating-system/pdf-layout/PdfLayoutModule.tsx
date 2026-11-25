@@ -38,7 +38,7 @@ const PdfLayoutContent = () => {
     }
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-slate-100 overflow-hidden">
+        <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] bg-slate-100 overflow-y-auto md:overflow-hidden">
             <PdfSidebar 
                 config={config} 
                 setConfig={setConfig} 

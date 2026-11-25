@@ -310,7 +310,7 @@ function RoomDetailsViewInner({ room }: RoomDetailsViewProps) {
                   </span>
                 </div>
                 <Link
-                  href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&guests=${guestCount}`}
+                  href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&adults=${searchParams.get("adults") ?? guestCount}&children=${searchParams.get("children") ?? 0}`}
                   className="w-full py-3.5 bg-zinc-950 hover:bg-black text-white rounded-none text-[10px] font-bold text-center block uppercase tracking-[0.15em] border border-zinc-950 transition-colors"
                 >
                   Return to Booking Form

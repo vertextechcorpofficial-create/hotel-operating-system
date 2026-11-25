@@ -30,9 +30,9 @@ export async function GET(request: Request) {
             ...(staticToken ? { 'Authorization': `Bearer ${staticToken}` } : {}),
         };
 
-        // 1. Fetch current reservation details
+        // 1. Fetch current reservation details (include guest name & total_amount)
         const resQuery = await fetch(
-            `${API_BASE_URL}/items/reservations_hos/${reservationId}?fields=id,check_out,status`,
+            `${API_BASE_URL}/items/reservations_hos/${reservationId}?fields=id,check_out,status,total_amount,guest_id.first_name,guest_id.last_name`,
             { headers }
         );
         if (!resQuery.ok) {
@@ -316,6 +316,26 @@ export async function POST(request: Request) {
 
         if (!itemsCreate.ok) {
             throw new Error('Failed to insert new night-by-night reservation items.');
+        }
+
+        // 6. Post extended stay charge to guest_charges_hos so folio balance stays accurate
+        if (additionCost > 0) {
+            const chargeCreate = await fetch(`${API_BASE_URL}/items/guest_charges_hos`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    reservation_id: parseInt(reservationId, 10),
+                    charge_type: 'Room Charge',
+                    description: `Stay Extension (${extensionNights.length} ${extensionNights.length === 1 ? 'night' : 'nights'})`,
+                    amount: additionCost,
+                    charge_date: new Date().toISOString(),
+                    created_by: userId,
+                    updated_by: userId,
+                }),
+            });
+            if (!chargeCreate.ok) {
+                throw new Error('Failed to post stay extension charge to guest folio.');
+            }
         }
 
         return NextResponse.json({

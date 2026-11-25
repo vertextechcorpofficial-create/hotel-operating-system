@@ -294,7 +294,7 @@ function AllRoomsGridInner({ initialRooms }: AllRoomsGridProps) {
 
           {/* Minimalist Structural Link Action */}
           <Link
-            href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&guests=${guestCount}`}
+            href={`/hotel-landing-page/booking?roomIds=${existingRoomIdsRaw}&checkin=${checkinStr}&checkout=${checkoutStr}&adults=${searchParams.get("adults") ?? guestCount}&children=${searchParams.get("children") ?? 0}`}
             className="text-[10px] font-bold uppercase tracking-[0.15em] text-white hover:text-zinc-300 transition-colors cursor-pointer shrink-0 border-b border-white pb-0.5 w-fit"
           >
             Return to Checkout Summary

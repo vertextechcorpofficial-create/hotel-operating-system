@@ -24,8 +24,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'reservationId and roomId are required.' }, { status: 400 });
         }
 
-        if (!depositAmount || !depositMethod) {
-            return NextResponse.json({ error: 'Incidental deposit amount and method are required.' }, { status: 400 });
+        const parsedDeposit = parseFloat(depositAmount);
+        if (!depositAmount || isNaN(parsedDeposit) || parsedDeposit <= 0 || !depositMethod) {
+            return NextResponse.json({ error: 'A valid positive incidental deposit amount and method are required.' }, { status: 400 });
         }
 
         const staticToken = process.env.DIRECTUS_STATIC_TOKEN;
@@ -36,18 +37,19 @@ export async function POST(request: Request) {
 
         // 0. Clean Room Mandate & Early Check-In Attempt Validation
         const roomStatusRes = await fetch(`${API_BASE_URL}/items/rooms_hos/${roomId}?fields=id,housekeeping_status_id`, { headers });
-        if (roomStatusRes.ok) {
-            const roomStatusData = await roomStatusRes.json();
-            const hkStatus = roomStatusData.data?.housekeeping_status_id;
-            if (hkStatus !== 1) { // 1 is Clean/Available
-                return NextResponse.json({ error: 'Room not ready. Reassign room or await Housekeeping clearance.' }, { status: 400 });
-            }
+        if (!roomStatusRes.ok) {
+            return NextResponse.json({ error: 'Failed to verify room housekeeping status.' }, { status: 400 });
+        }
+        const roomStatusData = await roomStatusRes.json();
+        const hkStatus = roomStatusData.data?.housekeeping_status_id;
+        if (hkStatus !== 1) { // 1 is Clean/Available
+            return NextResponse.json({ error: 'Room not ready. Reassign room or await Housekeeping clearance.' }, { status: 400 });
         }
 
         // 0b. Create Incidental Deposit Payment Record
         const depositPayload = {
             reservation_id: reservationId,
-            amount: parseFloat(depositAmount),
+            amount: parsedDeposit,
             payment_method: depositMethod,
             reference_number: null,
             status: 'Completed',
