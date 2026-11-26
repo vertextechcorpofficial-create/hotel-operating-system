@@ -45,9 +45,7 @@ export function OfferDetailSidebar({
             <span className="text-zinc-400 uppercase font-bold text-[9px] tracking-wider flex items-center gap-1.5 shrink-0">
               <Calendar size={11} /> Timeline
             </span>
-            <span className="text-right truncate">
-              {checkinStr && checkoutStr ? `${checkinStr} — ${checkoutStr}` : "Flexible dates"}
-            </span>
+            <span className="text-right truncate">{checkinStr} — {checkoutStr}</span>
           </div>
           <div className="p-3 flex items-center justify-between">
             <span className="text-zinc-400 uppercase font-bold text-[9px] tracking-wider flex items-center gap-1.5">
