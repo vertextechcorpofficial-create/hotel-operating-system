@@ -12,8 +12,7 @@ import { NavUser } from "@/components/shared/app-sidebar/nav-user";
 
 import { cookies } from "next/headers";
 
-// âœ… Wire the module you asked for
-import ComingSoon from "../_components/ComingSoon";
+import MyProfileModule from "@/modules/hotel-operating-system/my-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,10 +64,13 @@ function buildHeaderUserFromToken(token: string | null | undefined) {
 
     const name = [first, last].filter(Boolean).join(" ") || email || "User";
 
+    const userId = pickString(payload, ["sub", "id", "user_id"]) || String(payload?.sub ?? "");
+
     return {
         name,
         email: email || "",
         avatar: "/avatars/shadcn.jpg",
+        userId,
     };
 }
 
@@ -96,7 +98,7 @@ export default async function Page() {
                         <Breadcrumb>
                             <BreadcrumbList className="min-w-0 overflow-hidden">
                                 <BreadcrumbItem className="hidden md:block shrink-0">
-                                    <BreadcrumbLink href="#">HRM</BreadcrumbLink>
+                                    <BreadcrumbLink href="/hos/front-desk-dashboard">HOS</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block shrink-0" />
                                 <BreadcrumbItem className="min-w-0 overflow-hidden">
@@ -114,9 +116,15 @@ export default async function Page() {
                 </div>
             </header>
 
-            {/* âœ… Only content scrolls inside RIGHT column */}
+            {/* ✅ Only content scrolls inside RIGHT column */}
             <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4">
-                <ComingSoon />
+                <MyProfileModule
+                    initialUser={{
+                        name: headerUser.name,
+                        email: headerUser.email,
+                        userId: headerUser.userId,
+                    }}
+                />
             </main>
         </div>
     );

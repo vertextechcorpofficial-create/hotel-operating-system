@@ -9,16 +9,19 @@ import { FileText, Printer, X, Layout } from "lucide-react";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
-const mockEmployees = [
-    { id: "EMP-001", name: "John Doe", position: "Software Engineer", department: "IT", status: "Active" },
-    { id: "EMP-002", name: "Jane Smith", position: "Product Manager", department: "Product", status: "Active" },
-    { id: "EMP-003", name: "Bob Johnson", position: "UI/UX Designer", department: "Design", status: "On Leave" },
-    { id: "EMP-004", name: "Alice Brown", position: "QA Engineer", department: "IT", status: "Active" },
-    { id: "EMP-005", name: "Charlie Wilson", position: "HR Manager", department: "HR", status: "Active" },
-];
+interface RoomRow {
+    id: number | string;
+    room_number: string;
+    floor_number?: number | string | null;
+    type_id?: { name?: string } | number | null;
+    operational_status_id?: { status_name?: string } | number | null;
+    housekeeping_status_id?: { status_name?: string } | number | null;
+}
 
 export default function PdfTestPage() {
     const [templates, setTemplates] = useState<PdfTemplate[]>([]);
+    const [rooms, setRooms] = useState<RoomRow[]>([]);
+    const [loadingRooms, setLoadingRooms] = useState(true);
     const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
     const [companyData, setCompanyData] = useState<CompanyData | null>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -32,10 +35,11 @@ export default function PdfTestPage() {
                 const cached = localStorage.getItem('pdf_company_data');
                 if (cached) setCompanyData(JSON.parse(cached));
 
-                // Fetch Company Data and Templates in parallel
-                const [compRes, tpls] = await Promise.all([
+                // Fetch Company Data, Templates, and Live Room Inventory in parallel
+                const [compRes, tpls, roomsRes] = await Promise.all([
                     fetch("/api/pdf/company"),
-                    pdfTemplateService.fetchTemplates()
+                    pdfTemplateService.fetchTemplates(),
+                    fetch("/api/hos/room-registration")
                 ]);
 
                 if (compRes.ok) {
@@ -45,12 +49,19 @@ export default function PdfTestPage() {
                     if (company) localStorage.setItem('pdf_company_data', JSON.stringify(company));
                 }
 
+                if (roomsRes.ok) {
+                    const roomsJson = await roomsRes.json();
+                    setRooms(Array.isArray(roomsJson.data) ? roomsJson.data : []);
+                }
+
                 setTemplates(tpls);
                 if (tpls.length > 0) {
                     setSelectedTemplateName(tpls[0].name);
                 }
             } catch (error) {
-                console.error("Error fetching data:", error); // Changed error message to be more general
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoadingRooms(false);
             }
         };
         init();
@@ -82,14 +93,20 @@ export default function PdfTestPage() {
                 // 100% Accurate Title Placement (Using Top Baseline)
                 doc.setFontSize(12);
                 doc.setFont("helvetica", "bold");
-                doc.text("EMPLOYEE MASTERLIST", margins.left, startY, { baseline: 'top' });
+                doc.text("ROOM INVENTORY MASTERLIST", margins.left, startY, { baseline: 'top' });
 
                 // Start table just below the title (title is roughly 5mm high at 12pt)
                 autoTable(doc, {
                     startY: startY + 8,
                     margin: { ...margins, bottom: bottomMargin },
-                    head: [['ID', 'Name', 'Position', 'Department', 'Status']],
-                    body: mockEmployees.map(emp => [emp.id, emp.name, emp.position, emp.department, emp.status]),
+                    head: [['Room #', 'Floor', 'Room Type', 'Operational Status', 'Housekeeping']],
+                    body: rooms.map((r) => [
+                        `Room ${r.room_number}`,
+                        r.floor_number != null ? `Floor ${r.floor_number}` : '—',
+                        typeof r.type_id === 'object' && r.type_id !== null ? r.type_id.name || '—' : '—',
+                        typeof r.operational_status_id === 'object' && r.operational_status_id !== null ? r.operational_status_id.status_name || '—' : '—',
+                        typeof r.housekeeping_status_id === 'object' && r.housekeeping_status_id !== null ? r.housekeeping_status_id.status_name || '—' : '—',
+                    ]),
                     theme: 'striped',
                     headStyles: { fillColor: [41, 128, 185], textColor: 255 },
                     styles: { fontSize: 8 }
@@ -110,92 +127,113 @@ export default function PdfTestPage() {
     };
 
     return (
-        <div className="p-8 max-w-6xl mx-auto min-h-screen bg-slate-50">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-                        <Layout className="text-blue-600" size={32} />
-                        PDF Engine Test Module
-                    </h1>
-                    <p className="text-slate-500 mt-2 font-medium">Testing cross-module reusability with shared templates.</p>
-                </div>
-                
-                <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Select Layout</label>
-                        <select 
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 outline-none min-w-[200px]"
-                            value={selectedTemplateName}
-                            onChange={(e) => setSelectedTemplateName(e.target.value)}
-                        >
-                            {templates.length === 0 && <option>No templates found</option>}
-                            {templates.map(t => (
-                                <option key={t.id} value={t.name}>{t.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <button 
-                        onClick={handlePrint}
-                        disabled={isGenerating || !companyData}
-                        className={`mt-auto flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all transform active:scale-95 shadow-lg
-                            ${isGenerating ? 'bg-slate-200 text-slate-400' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100'}`}
-                    >
-                        {isGenerating ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : <Printer size={18} />}
-                        Generate PDF
-                    </button>
-                </div>
-            </div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-slate-50/60">
+            <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto w-full space-y-6 pb-8">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div className="space-y-1.5">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+                                <Layout className="text-blue-600 shrink-0" size={30} />
+                                PDF Engine Test Module
+                            </h1>
+                            <p className="text-sm text-slate-500 font-medium">
+                                Testing cross-module reusability with shared templates and live HOS room inventory.
+                            </p>
+                        </div>
 
-            {/* Sample UI Table */}
-            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white">
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <FileText className="text-slate-400" size={20} />
-                        Employees Data (Module UI)
-                    </h2>
-                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                        {mockEmployees.length} Records
-                    </span>
+                        <div className="flex flex-wrap items-center gap-4 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Select Layout</label>
+                                <select
+                                    className="bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-100 outline-none min-w-[220px]"
+                                    value={selectedTemplateName}
+                                    onChange={(e) => setSelectedTemplateName(e.target.value)}
+                                >
+                                    {templates.length === 0 && <option>No templates found</option>}
+                                    {templates.map(t => (
+                                        <option key={t.id} value={t.name}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <button
+                                onClick={handlePrint}
+                                disabled={isGenerating || !companyData}
+                                className={`mt-auto flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all transform active:scale-95 shadow-sm
+                                    ${isGenerating ? 'bg-slate-200 text-slate-400' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                            >
+                                {isGenerating ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : <Printer size={18} />}
+                                Generate PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Live HOS Room Inventory Table */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-white">
+                            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2.5">
+                                <FileText className="text-slate-400" size={20} />
+                                Room Inventory Data (Live HOS)
+                            </h2>
+                            <span className="bg-blue-50 text-blue-600 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                {rooms.length} Records
+                            </span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50/70">
+                                        <th className="py-3.5 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider border-b">Room #</th>
+                                        <th className="py-3.5 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider border-b">Floor</th>
+                                        <th className="py-3.5 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider border-b">Room Type</th>
+                                        <th className="py-3.5 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider border-b">Operational</th>
+                                        <th className="py-3.5 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider border-b text-center">Housekeeping</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {loadingRooms ? (
+                                        <tr>
+                                            <td colSpan={5} className="p-8 text-center text-sm text-slate-400">Loading live room inventory...</td>
+                                        </tr>
+                                    ) : rooms.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="p-8 text-center text-sm text-slate-400">No rooms returned from Directus.</td>
+                                        </tr>
+                                    ) : (
+                                        rooms.map((room) => {
+                                            const typeName = typeof room.type_id === 'object' && room.type_id !== null ? room.type_id.name || '—' : '—';
+                                            const opStatus = typeof room.operational_status_id === 'object' && room.operational_status_id !== null ? room.operational_status_id.status_name || '—' : '—';
+                                            const hkStatus = typeof room.housekeeping_status_id === 'object' && room.housekeeping_status_id !== null ? room.housekeeping_status_id.status_name || '—' : '—';
+                                            return (
+                                                <tr key={room.id} className="hover:bg-slate-50/60 transition-colors">
+                                                    <td className="py-4 px-6 text-sm font-mono font-bold text-slate-800 whitespace-nowrap">Room {room.room_number}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-500 whitespace-nowrap">{room.floor_number != null ? `Floor ${room.floor_number}` : '—'}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-700 font-medium">{typeName}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-600">{opStatus}</td>
+                                                    <td className="py-4 px-6 text-sm text-center whitespace-nowrap">
+                                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-tighter ${
+                                                            hkStatus.toLowerCase() === 'clean' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                                        }`}>
+                                                            {hkStatus}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="px-6 py-4 bg-slate-50/60 border-t border-slate-100">
+                            <p className="text-xs text-slate-400 font-medium">
+                                * Clicking &quot;Generate PDF&quot; will use the selected Template from the Database as a Header and render this table as the Body.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b">ID</th>
-                                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b">Name</th>
-                                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b">Position</th>
-                                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b">Department</th>
-                                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider border-b text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {mockEmployees.map((emp) => (
-                                <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-4 text-sm font-mono text-slate-600">{emp.id}</td>
-                                    <td className="p-4 text-sm font-bold text-slate-800">{emp.name}</td>
-                                    <td className="p-4 text-sm text-slate-500">{emp.position}</td>
-                                    <td className="p-4 text-sm text-slate-500">{emp.department}</td>
-                                    <td className="p-4 text-sm text-center">
-                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tighter ${
-                                            emp.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                        }`}>
-                                            {emp.status}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="p-6 bg-slate-50/50 border-t border-slate-100">
-                    <p className="text-xs text-slate-400 font-medium">
-                        * Clicking &quot;Generate PDF&quot; will use the selected Template from the Database as a Header and render this table as the Body.
-                    </p>
-                </div>
-            </div>
+            </main>
 
             {/* Preview Modal */}
             {isPreviewOpen && (
