@@ -10,9 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/shared/app-sidebar/nav-user";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 
-import LoginActivityModule from "@/modules/hotel-operating-system/login-activity";
+// âœ… Wire the module you asked for
+import ComingSoon from "../_components/ComingSoon";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,17 +65,10 @@ function buildHeaderUserFromToken(token: string | null | undefined) {
 
     const name = [first, last].filter(Boolean).join(" ") || email || "User";
 
-    const userId = pickString(payload, ["sub", "id", "user_id"]) || String(payload?.sub ?? "");
-    const iatRaw = typeof payload?.iat === "number" ? new Date(payload.iat * 1000).toISOString() : null;
-    const expRaw = typeof payload?.exp === "number" ? new Date(payload.exp * 1000).toISOString() : null;
-
     return {
         name,
         email: email || "",
         avatar: "/avatars/shadcn.jpg",
-        userId,
-        issuedAt: iatRaw,
-        expiresAt: expRaw,
     };
 }
 
@@ -82,8 +76,6 @@ export default async function Page() {
     // âœ… Next.js 16: cookies() is async
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value ?? null;
-    const reqHeaders = await headers();
-    const userAgent = reqHeaders.get("user-agent") || "Unknown browser";
 
     const headerUser = buildHeaderUserFromToken(token);
 
@@ -104,7 +96,7 @@ export default async function Page() {
                         <Breadcrumb>
                             <BreadcrumbList className="min-w-0 overflow-hidden">
                                 <BreadcrumbItem className="hidden md:block shrink-0">
-                                    <BreadcrumbLink href="/hos/front-desk-dashboard">HOS</BreadcrumbLink>
+                                    <BreadcrumbLink href="#">HRM</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block shrink-0" />
                                 <BreadcrumbItem className="min-w-0 overflow-hidden">
@@ -122,18 +114,9 @@ export default async function Page() {
                 </div>
             </header>
 
-            {/* ✅ Only content scrolls inside RIGHT column */}
+            {/* âœ… Only content scrolls inside RIGHT column */}
             <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4">
-                <LoginActivityModule
-                    session={{
-                        name: headerUser.name,
-                        email: headerUser.email,
-                        userId: headerUser.userId,
-                        issuedAt: headerUser.issuedAt,
-                        expiresAt: headerUser.expiresAt,
-                        userAgent,
-                    }}
-                />
+                <ComingSoon />
             </main>
         </div>
     );
