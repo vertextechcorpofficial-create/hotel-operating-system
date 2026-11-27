@@ -28,32 +28,32 @@ export function AvailabilityCalendar({
     <section className="p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-bold text-gray-900">
+          <h2 className="text-sm font-bold text-foreground">
             Fleet &amp; Chauffeur Availability Calendar ({filterDate})
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Displays active bookings plus the mandatory 30-minute turnaround buffer.
           </p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-600">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded bg-[#1a73e8] inline-block" /> Active
             Trip
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-amber-200 border border-amber-400 inline-block" />{" "}
+            <span className="w-3 h-3 rounded bg-amber-200 dark:bg-amber-900/70 border border-amber-400 dark:border-amber-600 inline-block" />{" "}
             30m Turnaround Buffer
           </span>
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-xl">
+      <div className="overflow-x-auto border border-border rounded-xl">
         <div className="min-w-[900px]">
-          <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700">
-            <div className="col-span-3 p-2.5 border-r border-gray-200">
+          <div className="grid grid-cols-12 bg-muted/60 border-b border-border text-xs font-semibold text-foreground">
+            <div className="col-span-3 p-2.5 border-r border-border">
               Fleet Vehicle
             </div>
-            <div className="col-span-9 flex justify-between px-2 py-2.5 text-[11px] font-mono text-gray-500">
+            <div className="col-span-9 flex justify-between px-2 py-2.5 text-[11px] font-mono text-muted-foreground">
               {hourLabels.map((lbl) => (
                 <span key={lbl}>{lbl}</span>
               ))}
@@ -71,16 +71,18 @@ export function AvailabilityCalendar({
             return (
               <div
                 key={v.id}
-                className="grid grid-cols-12 border-b border-gray-100 hover:bg-gray-50/60"
+                className="grid grid-cols-12 border-b border-border/60 hover:bg-muted/40"
               >
-                <div className="col-span-3 p-3 border-r border-gray-200 flex flex-col justify-center">
-                  <span className="text-xs font-bold text-gray-800">{v.name}</span>
-                  <span className="text-[11px] text-gray-400">
+                <div className="col-span-3 p-3 border-r border-border flex flex-col justify-center">
+                  <span className="text-xs font-bold text-foreground">
+                    {v.name}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
                     {v.plate} • Max {v.capacity} pax
                     {!v.active ? " • Maintenance" : ""}
                   </span>
                 </div>
-                <div className="col-span-9 relative h-14 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px)] bg-[length:5.88%_100%]">
+                <div className="col-span-9 relative h-14 bg-[linear-gradient(to_right,rgba(148,163,184,0.18)_1px,transparent_1px)] bg-[length:5.88%_100%]">
                   {vBookings.map((b) => {
                     const bStart = Math.max(
                       startHour * 60,
@@ -107,7 +109,7 @@ export function AvailabilityCalendar({
                             width: `${bufferPct}%`,
                           }}
                           title="Mandatory 30m Turnaround Buffer"
-                          className="absolute top-2 bottom-2 bg-amber-200/90 border-y border-r border-amber-400 rounded-r flex items-center justify-center text-[9px] font-bold text-amber-800"
+                          className="absolute top-2 bottom-2 bg-amber-200/90 dark:bg-amber-900/75 border-y border-r border-amber-400 dark:border-amber-600 rounded-r flex items-center justify-center text-[9px] font-bold text-amber-800 dark:text-amber-200"
                         >
                           30m
                         </div>

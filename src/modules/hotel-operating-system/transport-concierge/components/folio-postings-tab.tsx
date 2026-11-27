@@ -10,19 +10,22 @@ export function FolioPostingsTab({ folioPostings }: FolioPostingsTabProps) {
   return (
     <section className="p-5 space-y-4">
       <div>
-        <h2 className="text-sm font-bold text-gray-900">
+        <h2 className="text-sm font-bold text-foreground">
           Folio &amp; Settlement Postings (
-          <code className="text-xs text-[#1a73e8]">guest_charges_hos</code>)
+          <code className="text-xs text-[#1a73e8] dark:text-blue-400">
+            guest_charges_hos
+          </code>
+          )
         </h2>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Itemized transport charges posted to active in-house guest folios or
           walk-in immediate settlement receipts.
         </p>
       </div>
-      <div className="overflow-x-auto border border-gray-200 rounded-xl">
+      <div className="overflow-x-auto border border-border rounded-xl">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-semibold text-gray-700">
+            <tr className="bg-muted/60 border-b border-border text-xs font-semibold text-foreground">
               <th className="py-3 px-4">Posting ID</th>
               <th className="py-3 px-4">Booking Ref</th>
               <th className="py-3 px-4">Target Account / Folio</th>
@@ -32,29 +35,35 @@ export function FolioPostingsTab({ folioPostings }: FolioPostingsTabProps) {
               <th className="py-3 px-4 text-right">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-xs">
+          <tbody className="divide-y divide-border text-xs">
             {folioPostings.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-gray-400">
+                <td colSpan={7} className="py-8 text-center text-muted-foreground">
                   No transport folio charges posted yet.
                 </td>
               </tr>
             ) : (
               folioPostings.map((p) => (
-                <tr key={p.postingId} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 font-mono font-semibold text-[#1a73e8]">
+                <tr key={p.postingId} className="hover:bg-muted/40">
+                  <td className="py-3 px-4 font-mono font-semibold text-[#1a73e8] dark:text-blue-400">
                     {p.postingId}
                   </td>
-                  <td className="py-3 px-4 font-mono text-gray-700">
+                  <td className="py-3 px-4 font-mono text-foreground">
                     {p.bookingId}
                   </td>
-                  <td className="py-3 px-4 font-medium text-gray-900">
+                  <td className="py-3 px-4 font-medium text-foreground">
                     {p.targetAccount}
                   </td>
-                  <td className="py-3 px-4 text-gray-600">{p.description}</td>
-                  <td className="py-3 px-4 text-gray-600">{p.postedBy}</td>
-                  <td className="py-3 px-4 text-gray-400">{p.timestamp}</td>
-                  <td className="py-3 px-4 text-right font-bold text-emerald-600">
+                  <td className="py-3 px-4 text-muted-foreground">
+                    {p.description}
+                  </td>
+                  <td className="py-3 px-4 text-muted-foreground">
+                    {p.postedBy}
+                  </td>
+                  <td className="py-3 px-4 text-muted-foreground">
+                    {p.timestamp}
+                  </td>
+                  <td className="py-3 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
                     ₱
                     {Number(p.amount).toLocaleString("en-US", {
                       minimumFractionDigits: 2,

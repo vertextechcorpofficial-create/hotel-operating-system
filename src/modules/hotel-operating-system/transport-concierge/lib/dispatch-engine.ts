@@ -192,13 +192,23 @@ export function checkResourceConflicts({
 
 export function getStatusBadgeClasses(status: BookingStatus): string {
   const map: Record<BookingStatus, string> = {
-    Requested: "bg-gray-100 text-gray-700 border-gray-200",
-    Confirmed: "bg-blue-50 text-[#1a73e8] border-blue-200",
-    "Driver Assigned": "bg-indigo-50 text-indigo-700 border-indigo-200",
-    "En Route / Picked Up": "bg-amber-50 text-amber-800 border-amber-200",
-    Completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Cancelled: "bg-red-50 text-red-700 border-red-200",
-    "No-Show": "bg-rose-50 text-rose-700 border-rose-200",
+    Requested:
+      "bg-gray-100 text-gray-700 border-gray-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700",
+    Confirmed:
+      "bg-blue-50 text-[#1a73e8] border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
+    "Driver Assigned":
+      "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800",
+    "En Route / Picked Up":
+      "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
+    Completed:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+    Cancelled:
+      "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+    "No-Show":
+      "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800",
   };
-  return map[status] || "bg-gray-100 text-gray-700 border-gray-200";
+  return (
+    map[status] ||
+    "bg-gray-100 text-gray-700 border-gray-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700"
+  );
 }

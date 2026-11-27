@@ -179,16 +179,16 @@ export function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-2xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-xl max-w-2xl w-full overflow-hidden my-8">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-xl max-w-2xl w-full overflow-hidden my-8">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-base font-bold text-foreground">
               {editingBooking
                 ? `Edit / Reschedule ${editingBooking.id}`
                 : "New Transport Dispatch Booking"}
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Enforces reservation folio linkage, vehicle capacity, and 30-min
               turnaround buffer.
             </p>
@@ -196,7 +196,7 @@ export function BookingModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 p-1"
+            className="text-muted-foreground hover:text-foreground p-1"
           >
             <X className="w-5 h-5" />
           </button>
@@ -207,7 +207,7 @@ export function BookingModal({
           className="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-xs"
         >
           {validationError ? (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 space-y-1">
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 space-y-1">
               <div className="font-bold">Dispatch Conflict / Validation Error</div>
               <p>{validationError}</p>
             </div>
@@ -215,13 +215,13 @@ export function BookingModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Reservation / Guest Source (reservations_hos)
               </label>
               <select
                 value={reservationId}
                 onChange={(e) => handleReservationChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               >
                 {reservations.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -231,7 +231,7 @@ export function BookingModal({
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Guest Full Name *
               </label>
               <input
@@ -240,43 +240,43 @@ export function BookingModal({
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
                 placeholder="Enter guest name"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 flex flex-wrap items-center justify-between gap-2">
+          <div className="p-3 rounded-lg bg-muted/50 border border-border flex flex-wrap items-center justify-between gap-2">
             {!selectedRes ? (
-              <span className="text-gray-600">
+              <span className="text-muted-foreground">
                 Select a reservation or Walk-In Guest profile.
               </span>
             ) : selectedRes.id === "WALK-IN" ? (
               <>
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   Walk-in guest: routes payment to Immediate Settlement instead of
                   room folio.
                 </span>
-                <span className="px-2 py-0.5 rounded font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="px-2 py-0.5 rounded font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
                   Immediate Settlement
                 </span>
               </>
             ) : selectedRes.folioId ? (
               <>
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {selectedRes.room} • Stay: {selectedRes.arrival} to{" "}
                   {selectedRes.departure} • Active Folio: {selectedRes.folioId}
                 </span>
-                <span className="px-2 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="px-2 py-0.5 rounded font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   Folio Eligible ({selectedRes.folioId})
                 </span>
               </>
             ) : (
               <>
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   Reservation {selectedRes.id} is {selectedRes.status}. No active
                   folio available.
                 </span>
-                <span className="px-2 py-0.5 rounded font-semibold bg-red-50 text-red-700 border border-red-200">
+                <span className="px-2 py-0.5 rounded font-semibold bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900">
                   No Active Folio
                 </span>
               </>
@@ -285,7 +285,7 @@ export function BookingModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Service Type *
               </label>
               <select
@@ -293,7 +293,7 @@ export function BookingModal({
                 onChange={(e) =>
                   handleServiceTypeChange(e.target.value as ServiceType)
                 }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               >
                 <option value="Airport Pickup">Airport Pickup</option>
                 <option value="Airport Drop-off">Airport Drop-off</option>
@@ -302,7 +302,7 @@ export function BookingModal({
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Flight Number
               </label>
               <input
@@ -310,11 +310,11 @@ export function BookingModal({
                 value={flightNo}
                 onChange={(e) => setFlightNo(e.target.value)}
                 placeholder="e.g. PR 103"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs uppercase focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs uppercase focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Flight Status
               </label>
               <select
@@ -322,7 +322,7 @@ export function BookingModal({
                 onChange={(e) =>
                   setFlightStatus(e.target.value as FlightStatus)
                 }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               >
                 <option value="On Time">On Time</option>
                 <option value="Delayed (+45m)">Delayed (+45m)</option>
@@ -335,7 +335,7 @@ export function BookingModal({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Pickup Date *
               </label>
               <input
@@ -343,11 +343,11 @@ export function BookingModal({
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Pickup Time *
               </label>
               <input
@@ -355,11 +355,11 @@ export function BookingModal({
                 required
                 value={pickupTime}
                 onChange={(e) => setPickupTime(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Duration (Mins) *
               </label>
               <input
@@ -370,11 +370,11 @@ export function BookingModal({
                 step={15}
                 value={durationMins}
                 onChange={(e) => setDurationMins(Number(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Passengers *
               </label>
               <input
@@ -384,14 +384,14 @@ export function BookingModal({
                 max={15}
                 value={pax}
                 onChange={(e) => setPax(Number(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Pickup Location *
               </label>
               <input
@@ -400,11 +400,11 @@ export function BookingModal({
                 value={pickupLocation}
                 onChange={(e) => setPickupLocation(e.target.value)}
                 placeholder="e.g. NAIA Terminal 1 VIP Bay"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Drop-off Location *
               </label>
               <input
@@ -413,29 +413,29 @@ export function BookingModal({
                 value={dropoffLocation}
                 onChange={(e) => setDropoffLocation(e.target.value)}
                 placeholder="e.g. VOS Grand Hotel Main Lobby"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-3">
+          <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/60 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-800">
+              <span className="font-bold text-foreground">
                 Vehicle &amp; Chauffeur Assignment
               </span>
-              <span className="text-[11px] text-[#1a73e8] font-medium">
+              <span className="text-[11px] text-[#1a73e8] dark:text-blue-400 font-medium">
                 Checks overlap + 30m turnaround
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-foreground mb-1">
                   Vehicle
                 </label>
                 <select
                   value={vehicleId}
                   onChange={(e) => setVehicleId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
                 >
                   <option value="">-- Assign Later (Requested) --</option>
                   {vehicles.map((v) => {
@@ -467,13 +467,13 @@ export function BookingModal({
                 </select>
               </div>
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-foreground mb-1">
                   Chauffeur (/hos/staff-roster)
                 </label>
                 <select
                   value={driverId}
                   onChange={(e) => setDriverId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs focus:outline-none focus:border-[#1a73e8]"
                 >
                   <option value="">-- Assign Later --</option>
                   {drivers.map((d) => {
@@ -506,7 +506,7 @@ export function BookingModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">
+              <label className="block font-semibold text-foreground mb-1">
                 Transfer Rate (PHP) *
               </label>
               <input
@@ -516,12 +516,12 @@ export function BookingModal({
                 step={50}
                 value={rate}
                 onChange={(e) => setRate(Number(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold focus:outline-none focus:border-[#1a73e8]"
+                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-xs font-bold focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
             {editingBooking ? (
               <div>
-                <label className="block font-semibold text-amber-800 mb-1">
+                <label className="block font-semibold text-amber-800 dark:text-amber-300 mb-1">
                   Schedule Change Reason *
                 </label>
                 <input
@@ -530,17 +530,17 @@ export function BookingModal({
                   value={editReason}
                   onChange={(e) => setEditReason(e.target.value)}
                   placeholder="e.g. Flight PR 103 delayed +45m"
-                  className="w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs focus:outline-none"
+                  className="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-foreground px-3 py-2 text-xs focus:outline-none"
                 />
               </div>
             ) : null}
           </div>
 
-          <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100"
+              className="px-4 py-2 rounded-lg font-medium text-muted-foreground hover:bg-muted"
             >
               Cancel
             </button>
@@ -586,20 +586,20 @@ export function CancelExceptionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-2xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-xl max-w-md w-full overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-base font-bold text-gray-900">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-50 flex items-center justify-center p-4">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-xl max-w-md w-full overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-base font-bold text-foreground">
             Mark {bookingId} as {targetState}
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Mandatory audit log reason required for post-dispatch status
             exceptions.
           </p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-gray-700 mb-1">
+            <label className="block font-semibold text-foreground mb-1">
               Audit Reason *
             </label>
             <textarea
@@ -608,14 +608,14 @@ export function CancelExceptionModal({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Enter reason for cancellation or no-show..."
-              className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:border-red-500"
+              className="w-full rounded-lg border border-border bg-background text-foreground p-3 focus:outline-none focus:border-red-500"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100"
+              className="px-4 py-2 rounded-lg font-medium text-muted-foreground hover:bg-muted"
             >
               Back
             </button>
@@ -661,14 +661,14 @@ export function ManifestModal({
     .sort((a, b) => a.pickupTime.localeCompare(b.pickupTime));
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-2xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-xl max-w-4xl w-full overflow-hidden my-8">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between no-print">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-xl max-w-4xl w-full overflow-hidden my-8">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between no-print">
           <div>
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-base font-bold text-foreground">
               Chronological Guest Pickup Manifest
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Dispatch sheet for Concierge Desk &amp; Chauffeurs
             </p>
           </div>
@@ -683,31 +683,31 @@ export function ManifestModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-700 p-1"
+              className="text-muted-foreground hover:text-foreground p-1"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
         <div className="p-6 space-y-4">
-          <div className="flex flex-wrap justify-between items-end border-b border-gray-200 pb-3">
+          <div className="flex flex-wrap justify-between items-end border-b border-border pb-3">
             <div>
-              <h3 className="text-sm font-bold text-gray-900">
+              <h3 className="text-sm font-bold text-foreground">
                 VOS Grand Hotel — Daily Guest Pickup &amp; Transfer Manifest
               </h3>
-              <p className="text-xs text-gray-500">
-                Service Date: <strong>{filterDate}</strong> • Generated by{" "}
+              <p className="text-xs text-muted-foreground">
+                Service Date: <strong className="text-foreground">{filterDate}</strong> • Generated by{" "}
                 {currentRole}
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-gray-100 text-gray-700">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-muted text-foreground">
               Active Trips: {list.length}
             </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-gray-700 font-semibold">
+                <tr className="bg-muted/60 border-b border-border text-foreground font-semibold">
                   <th className="p-2.5">Time</th>
                   <th className="p-2.5">Guest / Room</th>
                   <th className="p-2.5">Flight #</th>
@@ -716,10 +716,10 @@ export function ManifestModal({
                   <th className="p-2.5">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-gray-400">
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
                       No active transfers scheduled for {filterDate}.
                     </td>
                   </tr>
@@ -729,32 +729,32 @@ export function ManifestModal({
                     const drv = drivers.find((d) => d.id === b.driverId);
                     return (
                       <tr key={b.id}>
-                        <td className="p-2.5 font-bold">{b.pickupTime}</td>
+                        <td className="p-2.5 font-bold text-foreground">{b.pickupTime}</td>
                         <td className="p-2.5">
-                          <strong>{b.guestName}</strong>
+                          <strong className="text-foreground">{b.guestName}</strong>
                           <br />
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             {b.room} ({b.pax} pax)
                           </span>
                         </td>
-                        <td className="p-2.5 font-semibold">
+                        <td className="p-2.5 font-semibold text-foreground">
                           {b.flightNo}{" "}
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             ({b.flightStatus})
                           </span>
                         </td>
-                        <td className="p-2.5">
+                        <td className="p-2.5 text-muted-foreground">
                           {b.pickupLocation} →{" "}
-                          <strong>{b.dropoffLocation}</strong>
+                          <strong className="text-foreground">{b.dropoffLocation}</strong>
                         </td>
-                        <td className="p-2.5">
+                        <td className="p-2.5 text-foreground">
                           {veh ? `${veh.name} (${veh.plate})` : "TBD"}
                           <br />
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             {drv ? drv.name : "Unassigned"}
                           </span>
                         </td>
-                        <td className="p-2.5 font-semibold">{b.status}</td>
+                        <td className="p-2.5 font-semibold text-foreground">{b.status}</td>
                       </tr>
                     );
                   })
@@ -790,14 +790,14 @@ export function FleetRosterModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-2xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-xl max-w-3xl w-full overflow-hidden my-8">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-2xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-xl max-w-3xl w-full overflow-hidden my-8">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-base font-bold text-foreground">
               Fleet Master Data &amp; Staff Roster Sync
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Connected to /hos/staff-roster • Admin role manages vehicle active
               status ({currentRole} active)
             </p>
@@ -805,7 +805,7 @@ export function FleetRosterModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 p-1"
+            className="text-muted-foreground hover:text-foreground p-1"
           >
             <X className="w-5 h-5" />
           </button>
@@ -813,20 +813,20 @@ export function FleetRosterModal({
 
         <div className="p-6 space-y-6 max-h-[78vh] overflow-y-auto">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
               Hotel Fleet Master Registry
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {vehicles.map((v) => (
                 <div
                   key={v.id}
-                  className="p-3 rounded-xl border border-gray-200 flex items-center justify-between bg-gray-50"
+                  className="p-3 rounded-xl border border-border flex items-center justify-between bg-muted/40"
                 >
                   <div>
-                    <div className="font-bold text-xs text-gray-900">
+                    <div className="font-bold text-xs text-foreground">
                       {v.name}
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-[11px] text-muted-foreground">
                       {v.plate} • {v.type} • Max {v.capacity} pax
                     </div>
                   </div>
@@ -834,10 +834,11 @@ export function FleetRosterModal({
                     type="button"
                     disabled={togglingVehicleId === v.id}
                     onClick={() => onToggleVehicle(v.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${v.active
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-red-50 text-red-700 border-red-200"
-                      } ${togglingVehicleId === v.id ? "opacity-50" : ""}`}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                      v.active
+                        ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                        : "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900"
+                    } ${togglingVehicleId === v.id ? "opacity-50" : ""}`}
                   >
                     {v.active ? "In Service" : "Maintenance"}
                   </button>
@@ -847,28 +848,29 @@ export function FleetRosterModal({
           </div>
 
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
               Chauffeur Shift Roster (/hos/staff-roster)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {drivers.map((d) => (
                 <div
                   key={d.id}
-                  className="p-3 rounded-xl border border-gray-200 flex items-center justify-between bg-gray-50"
+                  className="p-3 rounded-xl border border-border flex items-center justify-between bg-muted/40"
                 >
                   <div>
-                    <div className="font-bold text-xs text-gray-900">
+                    <div className="font-bold text-xs text-foreground">
                       {d.name}
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-[11px] text-muted-foreground">
                       License: {d.license} • Shift: {d.shiftStart}–{d.shiftEnd}
                     </div>
                   </div>
                   <span
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold ${d.onDuty
-                        ? "bg-blue-50 text-[#1a73e8] border border-blue-200"
-                        : "bg-gray-200 text-gray-600"
-                      }`}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold ${
+                      d.onDuty
+                        ? "bg-blue-50 dark:bg-blue-950/60 text-[#1a73e8] dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                        : "bg-muted text-muted-foreground"
+                    }`}
                   >
                     {d.onDuty ? "On Shift" : "Off Duty"}
                   </span>

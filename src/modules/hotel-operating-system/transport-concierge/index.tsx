@@ -360,8 +360,8 @@ export default function TransportConciergeModule() {
   if (loading && !data) {
     return (
       <div className="flex min-h-[360px] items-center justify-center">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Loader2 className="h-4 w-4 animate-spin text-[#1a73e8]" />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin text-[#1a73e8] dark:text-blue-400" />
           <span>Loading Concierge &amp; Transport Dispatch...</span>
         </div>
       </div>
@@ -370,12 +370,12 @@ export default function TransportConciergeModule() {
 
   if (error && !data) {
     return (
-      <div className="max-w-xl mx-auto mt-10 p-6 rounded-xl border border-red-200 bg-red-50 text-center space-y-3">
-        <AlertCircle className="w-6 h-6 text-red-600 mx-auto" />
-        <h2 className="text-sm font-bold text-red-900">
+      <div className="max-w-xl mx-auto mt-10 p-6 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 text-center space-y-3">
+        <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 mx-auto" />
+        <h2 className="text-sm font-bold text-red-900 dark:text-red-200">
           Unable to load Transport Dispatch
         </h2>
-        <p className="text-xs text-red-700">{error}</p>
+        <p className="text-xs text-red-700 dark:text-red-300">{error}</p>
         <button
           type="button"
           onClick={() => void fetchDispatchData(false)}
@@ -403,13 +403,13 @@ export default function TransportConciergeModule() {
       {/* Page Title & Primary Action Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
             Concierge &amp; Transport Dispatch
           </h1>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mt-1">
-            <Clock className="w-3.5 h-3.5 text-gray-400" />
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
             <span>Business Date: {activeDate}</span>
-            <span className="text-gray-300">•</span>
+            <span className="text-border">•</span>
             <span>
               {data.meta.turnaroundBufferMins}-min Turnaround Buffer Active
             </span>
@@ -423,7 +423,7 @@ export default function TransportConciergeModule() {
               handleRoleChange(e.target.value as TransportRole)
             }
             aria-label="Switch HOS Role"
-            className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-[#1a73e8] focus:outline-none cursor-pointer shadow-2xs"
+            className="rounded-lg border border-blue-200 dark:border-blue-800 bg-card text-xs font-semibold text-[#1a73e8] dark:text-blue-400 px-3 py-2 focus:outline-none cursor-pointer shadow-2xs"
           >
             <option value="Concierge">Role: Concierge / FD</option>
             <option value="Driver">Role: Driver</option>
@@ -434,27 +434,27 @@ export default function TransportConciergeModule() {
           <button
             type="button"
             onClick={() => void fetchDispatchData(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border hover:bg-muted transition shadow-2xs"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
+            <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
             Refresh
           </button>
 
           <button
             type="button"
             onClick={() => setManifestOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border hover:bg-muted transition shadow-2xs"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-gray-500" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />
             Pickup Manifest
           </button>
 
           <button
             type="button"
             onClick={() => setFleetOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border hover:bg-muted transition shadow-2xs"
           >
-            <ArrowLeftRight className="w-3.5 h-3.5 text-gray-500" />
+            <ArrowLeftRight className="w-3.5 h-3.5 text-muted-foreground" />
             Fleet &amp; Roster
           </button>
 
@@ -472,12 +472,12 @@ export default function TransportConciergeModule() {
       </div>
 
       {/* Status / Flight Alert Banner */}
-      <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 no-print">
+      <div className="bg-[#fffbeb] dark:bg-amber-950/30 border border-[#fde68a] dark:border-amber-800/60 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 no-print">
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold border border-amber-300">
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-semibold border border-amber-300 dark:border-amber-700">
             Dispatch Active
           </span>
-          <span className="text-gray-700">
+          <span className="text-foreground/90">
             Connected to{" "}
             <strong>
               reservations_hos ({data.meta.reservationsSource})
@@ -497,8 +497,8 @@ export default function TransportConciergeModule() {
             ) : null}
           </span>
         </div>
-        <span className="text-[11px] text-gray-500 font-medium">
-          Role: <strong className="text-gray-800">{currentRole}</strong>
+        <span className="text-[11px] text-muted-foreground font-medium">
+          Role: <strong className="text-foreground">{currentRole}</strong>
         </span>
       </div>
 
@@ -506,24 +506,24 @@ export default function TransportConciergeModule() {
       <KpiCards dayBookings={dayBookings} />
 
       {/* Sub-view Navigation Tabs */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden no-print">
-        <div className="px-5 pt-3 border-b border-gray-200 flex items-center justify-between flex-wrap gap-4">
+      <div className="bg-card text-card-foreground rounded-xl border border-border shadow-2xs overflow-hidden no-print">
+        <div className="px-5 pt-3 border-b border-border flex items-center justify-between flex-wrap gap-4">
           <nav className="flex space-x-6" aria-label="Tabs">
             <button
               type="button"
               onClick={() => setActiveTab("dispatch")}
               className={`border-b-2 pb-3 text-xs flex items-center gap-2 transition ${
                 activeTab === "dispatch"
-                  ? "border-[#1a73e8] font-semibold text-[#1a73e8]"
-                  : "border-transparent font-medium text-gray-500 hover:text-gray-800"
+                  ? "border-[#1a73e8] dark:border-blue-400 font-semibold text-[#1a73e8] dark:text-blue-400"
+                  : "border-transparent font-medium text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>Transport Dispatch Ledger</span>
               <span
                 className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
                   activeTab === "dispatch"
-                    ? "bg-blue-50 text-[#1a73e8]"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-blue-50 dark:bg-blue-950/60 text-[#1a73e8] dark:text-blue-300"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {dayBookings.length}
@@ -535,8 +535,8 @@ export default function TransportConciergeModule() {
               onClick={() => setActiveTab("timeline")}
               className={`border-b-2 pb-3 text-xs flex items-center gap-2 transition ${
                 activeTab === "timeline"
-                  ? "border-[#1a73e8] font-semibold text-[#1a73e8]"
-                  : "border-transparent font-medium text-gray-500 hover:text-gray-800"
+                  ? "border-[#1a73e8] dark:border-blue-400 font-semibold text-[#1a73e8] dark:text-blue-400"
+                  : "border-transparent font-medium text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>Vehicle &amp; Driver Availability Calendar</span>
@@ -547,16 +547,16 @@ export default function TransportConciergeModule() {
               onClick={() => setActiveTab("folios")}
               className={`border-b-2 pb-3 text-xs flex items-center gap-2 transition ${
                 activeTab === "folios"
-                  ? "border-[#1a73e8] font-semibold text-[#1a73e8]"
-                  : "border-transparent font-medium text-gray-500 hover:text-gray-800"
+                  ? "border-[#1a73e8] dark:border-blue-400 font-semibold text-[#1a73e8] dark:text-blue-400"
+                  : "border-transparent font-medium text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>Posted Folio Charges (guest_charges_hos)</span>
               <span
                 className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
                   activeTab === "folios"
-                    ? "bg-blue-50 text-[#1a73e8]"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-blue-50 dark:bg-blue-950/60 text-[#1a73e8] dark:text-blue-300"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {data.folioPostings.length}
