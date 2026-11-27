@@ -30,10 +30,28 @@ export async function POST(request: Request) {
             ...(staticToken ? { 'Authorization': `Bearer ${staticToken}` } : {}),
         };
 
-        // 0. Process Incidental Deposit Resolution
+        // 0. Process Incidental Deposit Resolution (supports full refund, full forfeit, or partial forfeit + partial refund)
         if (depositId) {
-            if (resolution === 'Refund' && refundAmount > 0) {
-                // Deduct from expected cash balance
+            if (resolution === 'Forfeit' && forfeitAmount > 0) {
+                // Log damage charge (covered by the held deposit; no duplicate cash payment added)
+                const chargePayload = {
+                    reservation_id: reservationId,
+                    charge_type: 'Damage',
+                    description: 'Incidental Deposit Forfeit - Damage Fee',
+                    amount: parseFloat(forfeitAmount),
+                    charge_date: new Date().toISOString(),
+                    created_by: userId,
+                    updated_by: userId,
+                };
+                await fetch(`${API_BASE_URL}/items/guest_charges_hos`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(chargePayload),
+                });
+            }
+
+            if ((resolution === 'Refund' || resolution === 'Forfeit') && refundAmount > 0) {
+                // Deduct refunded portion from expected cash balance
                 const refundPayload = {
                     reservation_id: reservationId,
                     amount: -parseFloat(refundAmount),
@@ -49,40 +67,6 @@ export async function POST(request: Request) {
                     method: 'POST',
                     headers,
                     body: JSON.stringify(refundPayload),
-                });
-            } else if (resolution === 'Forfeit' && forfeitAmount > 0) {
-                // Log damage charge
-                const chargePayload = {
-                    reservation_id: reservationId,
-                    charge_type: 'Damage',
-                    description: 'Incidental Deposit Forfeit - Damage Fee',
-                    amount: parseFloat(forfeitAmount),
-                    charge_date: new Date().toISOString(),
-                    created_by: userId,
-                    updated_by: userId,
-                };
-                await fetch(`${API_BASE_URL}/items/guest_charges_hos`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(chargePayload),
-                });
-
-                // Record matching payment to keep folio balanced
-                const payPayload = {
-                    reservation_id: reservationId,
-                    amount: parseFloat(forfeitAmount),
-                    payment_method: 'Cash',
-                    reference_number: null,
-                    status: 'Completed',
-                    notes: 'Incidental Deposit Forfeited Payment',
-                    payment_date: new Date().toISOString(),
-                    created_by: userId,
-                    updated_by: userId,
-                };
-                await fetch(`${API_BASE_URL}/items/payments_hos`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(payPayload),
                 });
             }
         }

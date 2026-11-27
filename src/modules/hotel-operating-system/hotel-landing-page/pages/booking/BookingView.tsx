@@ -12,6 +12,7 @@ import { BookingStatusModal, type ModalState } from "./components/BookingStatusM
 import { BookingSummaryCard } from "./components/BookingSummaryCard";
 import { BookingFormFields } from "./components/BookingFormFields";
 import { BookingFormValues, bookingSchema } from "./schema/booking.schema";
+import { parseAdultsParam, parseChildrenParam } from "../../lib/url-params";
 
 interface BookingTransactionPayload {
   roomIds: number[];
@@ -42,20 +43,39 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
     description: "",
   });
 
-  const roomIdsRaw: string = searchParams.get("roomIds") || searchParams.get("roomId") || "1";
+  const roomIdsRaw: string = searchParams.get("roomIds") || searchParams.get("roomId") || "";
   const checkinStr: string = searchParams.get("checkin") || "";
   const checkoutStr: string = searchParams.get("checkout") || "";
   
+  const rawAdults = searchParams.get("adults");
+  const rawChildren = searchParams.get("children");
+
   const adultsCount = useMemo<number>(() => {
-    return Number(searchParams.get("adults") ?? 2);
-  }, [searchParams]);
+    return parseAdultsParam(rawAdults, 2, 20);
+  }, [rawAdults]);
 
   const childrenCount = useMemo<number>(() => {
-    return Number(searchParams.get("children") ?? 0);
-  }, [searchParams]);
+    return parseChildrenParam(rawChildren, 0, 20);
+  }, [rawChildren]);
+
+  useEffect(() => {
+    const needsAdultsSync = rawAdults !== null && String(adultsCount) !== rawAdults;
+    const needsChildrenSync = rawChildren !== null && String(childrenCount) !== rawChildren;
+    if (needsAdultsSync || needsChildrenSync) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (needsAdultsSync) params.set("adults", String(adultsCount));
+      if (needsChildrenSync) params.set("children", String(childrenCount));
+      router.replace(`/hotel-landing-page/booking?${params.toString()}`, { scroll: false });
+    }
+  }, [rawAdults, rawChildren, adultsCount, childrenCount, searchParams, router]);
 
   const matchedRooms = useMemo<RoomData[]>(() => {
-    const ids: number[] = roomIdsRaw.split(",").map(Number);
+    if (!roomIdsRaw.trim()) return [];
+    const ids: number[] = roomIdsRaw
+      .split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n > 0);
+    if (ids.length === 0) return [];
     return rooms.filter((r: RoomData) => ids.includes(r.id));
   }, [roomIdsRaw, rooms]);
 
@@ -76,14 +96,43 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
     router.push(`/hotel-landing-page/booking?${params.toString()}`);
   };
 
-  const totalNights = useMemo<number>(() => {
-    if (!checkinStr || !checkoutStr) return 0;
-    const start = new Date(checkinStr);
-    const end = new Date(checkoutStr);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return isNaN(diffDays) || diffDays <= 0 ? 0 : diffDays;
+  const dateValidation = useMemo<{ nights: number; error: string | null }>(() => {
+    if (!checkinStr || !checkoutStr) {
+      return { nights: 0, error: "Please select both check-in and check-out dates." };
+    }
+    const [cy, cm, cd] = checkinStr.split("-").map(Number);
+    const [oy, om, od] = checkoutStr.split("-").map(Number);
+    if (!cy || !cm || !cd || !oy || !om || !od) {
+      return { nights: 0, error: "Invalid date format. Please re-select your dates." };
+    }
+    const startMs = Date.UTC(cy, cm - 1, cd);
+    const endMs = Date.UTC(oy, om - 1, od);
+    const now = new Date();
+    const todayMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    if (startMs < todayMs) {
+      return { nights: 0, error: "Check-in date cannot be in the past." };
+    }
+    if (endMs <= startMs) {
+      return { nights: 0, error: "Check-out date must be after check-in date." };
+    }
+    const diffDays = Math.round((endMs - startMs) / 86_400_000);
+    return { nights: diffDays, error: null };
   }, [checkinStr, checkoutStr]);
+
+  const totalNights = dateValidation.nights;
+
+  const capacityError = useMemo<string | null>(() => {
+    if (matchedRooms.length === 0) return null;
+    const maxAdults = matchedRooms.reduce((sum, r) => sum + (r.maxAdults || 2), 0);
+    const maxChildren = matchedRooms.reduce((sum, r) => sum + (r.maxChildren || 0), 0);
+    if (adultsCount > maxAdults || childrenCount > maxChildren) {
+      return `Selected room capacity is up to ${maxAdults} Adults and ${maxChildren} Children.`;
+    }
+    return null;
+  }, [matchedRooms, adultsCount, childrenCount]);
+
+  const isBookingBlocked =
+    matchedRooms.length === 0 || Boolean(dateValidation.error) || Boolean(capacityError) || totalNights <= 0;
 
   const formatDisplayDate = (dateStr: string): string => {
     if (!dateStr) return "Select date";
@@ -121,7 +170,6 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = watch((values) => {
       if (Object.keys(values).length > 0) {
         sessionStorage.setItem("bookingFormDraft", JSON.stringify(values));
@@ -138,12 +186,12 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
   const totalInvoiceGross: number = baseSubtotal;
 
   const onBookingExecute = async (data: BookingFormValues): Promise<void> => {
-    if (!checkinStr || !checkoutStr) {
+    if (dateValidation.error) {
       setModal({
         isOpen: true,
         type: "warning",
-        title: "Please Select Your Dates",
-        description: "Choose your arrival and departure dates on the calendar before processing your payment.",
+        title: "Invalid Stay Dates",
+        description: dateValidation.error,
       });
       return;
     }
@@ -154,6 +202,16 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
         type: "warning",
         title: "No Rooms Selected",
         description: "Your cart is currently empty. Please select at least one room layout to secure a booking.",
+      });
+      return;
+    }
+
+    if (capacityError) {
+      setModal({
+        isOpen: true,
+        type: "warning",
+        title: "Guest Count Exceeds Capacity",
+        description: capacityError,
       });
       return;
     }
@@ -218,6 +276,24 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
         </h1>
       </div>
 
+      {(matchedRooms.length === 0 || dateValidation.error || capacityError) && (
+        <div className="mb-8 border border-amber-200 bg-amber-50/80 text-amber-900 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-1">
+            {matchedRooms.length === 0 && (
+              <p className="font-medium">No valid room selected. Please choose a room from the catalog.</p>
+            )}
+            {dateValidation.error && <p className="font-medium">{dateValidation.error}</p>}
+            {capacityError && <p className="font-medium">{capacityError}</p>}
+          </div>
+          <Link
+            href="/hotel-landing-page/rooms"
+            className="shrink-0 bg-zinc-900 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] rounded-sm hover:bg-zinc-800 transition-colors text-center"
+          >
+            Browse Rooms
+          </Link>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onBookingExecute)} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         <BookingFormFields register={register} errors={errors} />
 
@@ -235,6 +311,7 @@ function BookingViewInner({ rooms }: { rooms: RoomData[] }) {
           baseSubtotal={baseSubtotal}
           totalInvoiceGross={totalInvoiceGross}
           isSubmitting={isSubmitting}
+          isSubmitDisabled={isBookingBlocked}
         />
       </form>
 

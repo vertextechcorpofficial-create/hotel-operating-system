@@ -21,8 +21,7 @@ export async function GET() {
             ...(staticToken ? { 'Authorization': `Bearer ${staticToken}` } : {}),
         };
 
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        const todayManilaStr = getManilaISOString().split('T')[0];
 
         // Fetch tasks and rooms in parallel
         const [tasksRes, roomsRes] = await Promise.all([
@@ -54,8 +53,7 @@ export async function GET() {
 
         const cleanedToday = tasks.filter((t: { status: string; actual_completion_time?: string }) => {
             if (t.status !== 'Completed' || !t.actual_completion_time) return false;
-            const completionDate = new Date(t.actual_completion_time);
-            return completionDate >= todayStart;
+            return t.actual_completion_time.split('T')[0] === todayManilaStr;
         }).length;
         
         const clearedAllTime = tasks.filter((t: { status: string }) => t.status === 'Completed').length;

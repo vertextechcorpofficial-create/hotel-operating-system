@@ -38,8 +38,18 @@ export async function GET(request: Request) {
             const resData = await resRes.json();
             const rawRes = resData.data || null;
             if (rawRes) {
+                const itemRes = await fetch(
+                    `${API_BASE_URL}/items/reservation_items_hos?filter=${encodeURIComponent(JSON.stringify({ reservation_id: { _eq: parseInt(reservationId, 10) } }))}&fields=room_id&limit=1`,
+                    { headers }
+                );
+                let resolvedRoomId: number | null = null;
+                if (itemRes.ok) {
+                    const itemJson = await itemRes.json();
+                    resolvedRoomId = itemJson.data?.[0]?.room_id ?? null;
+                }
                 reservation = {
                     ...rawRes,
+                    room_id: resolvedRoomId,
                     check_in_date: rawRes.check_in,
                     check_out_date: rawRes.check_out
                 };

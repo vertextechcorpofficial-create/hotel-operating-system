@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "crypto";
 import { headers } from "next/headers";
 import { bookingEnv } from "./config";
 import { 
@@ -20,15 +21,20 @@ export async function initiatePaymentSession(bookingData: BookingPayload): Promi
     // 2. Construct base64 authorization header cleanly using our validated config
     const authHeader: string = `Basic ${Buffer.from(`${bookingEnv.PAYMONGO_SECRET_KEY}:`).toString("base64")}`;
 
-    // 3. DYNAMIC HOST DETECTION
-    // Instead of relying on API environment variable naming schemes, we read the active 
-    // incoming request headers to guarantee the redirect routes back to your Next.js frontend UI context.
     const headerStorage = await headers();
-    const host = headerStorage.get("host") || "localhost:3000";
-    const protocol = headerStorage.get("x-forwarded-proto") || "http";
-    const baseAppUrl = `${protocol}://${host}`;
+    const rawHost = headerStorage.get("host") || "localhost:3000";
+    const safeHost = /^[a-zA-Z0-9.:-]+$/.test(rawHost) ? rawHost : "localhost:3000";
+    const rawProto = headerStorage.get("x-forwarded-proto");
+    const protocol = rawProto === "https" ? "https" : "http";
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+    const baseAppUrl = configuredAppUrl || `${protocol}://${safeHost}`;
 
-    const successUrl: string = `${baseAppUrl}/hotel-landing-page/booking/success?reservationId=${bookingData.reservationId}`;
+    const verificationToken = crypto
+      .createHmac("sha256", bookingEnv.PAYMONGO_SECRET_KEY)
+      .update(bookingData.reservationId)
+      .digest("hex");
+
+    const successUrl: string = `${baseAppUrl}/hotel-landing-page/booking/success?reservationId=${bookingData.reservationId}&token=${verificationToken}`;
     const cancelUrl: string = `${baseAppUrl}/hotel-landing-page/booking?status=cancelled`;
 
     // Structuring configuration payload exactly matching PayMongo API schema expectations

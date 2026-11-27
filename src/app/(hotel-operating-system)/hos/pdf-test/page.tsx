@@ -97,6 +97,7 @@ export default function PdfTestPage() {
             });
 
             const blob = doc.output('blob');
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
             const url = URL.createObjectURL(blob);
             setPdfUrl(url);
             setIsPreviewOpen(true);

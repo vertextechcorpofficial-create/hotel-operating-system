@@ -149,20 +149,31 @@ export function TaskQueue({ tasks, onTaskUpdated }: TaskQueueProps) {
                                 size="sm" 
                                 variant="outline"
                                 className="w-[120px] text-xs font-bold border-primary text-primary hover:bg-primary/10"
-                                disabled={updatingId === task.id}
+                                disabled={updatingId === task.id.toString()}
                                 onClick={() => handleUpdateStatus(task.id, "In Progress")}
                             >
-                                {updatingId === task.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Start Task"}
+                                {updatingId === task.id.toString() ? <Loader2 className="h-3 w-3 animate-spin" /> : "Start Task"}
                             </Button>
                         )}
                         {task.status === "In Progress" && (
                             <Button 
                                 size="sm" 
                                 className="w-[120px] text-xs font-bold bg-primary hover:bg-primary/90"
-                                disabled={updatingId === task.id}
+                                disabled={updatingId === task.id.toString()}
                                 onClick={() => handleUpdateStatus(task.id, "Completed")}
                             >
-                                {updatingId === task.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Mark Complete"}
+                                {updatingId === task.id.toString() ? <Loader2 className="h-3 w-3 animate-spin" /> : "Mark Complete"}
+                            </Button>
+                        )}
+                        {task.status === "Inspecting" && (
+                            <Button 
+                                size="sm" 
+                                variant="secondary"
+                                className="w-[140px] text-xs font-bold"
+                                disabled={updatingId === task.id.toString()}
+                                onClick={() => handleUpdateStatus(task.id, "Completed")}
+                            >
+                                {updatingId === task.id.toString() ? <Loader2 className="h-3 w-3 animate-spin" /> : "Complete Inspection"}
                             </Button>
                         )}
                         {task.status === "Completed" && (
@@ -178,7 +189,7 @@ export function TaskQueue({ tasks, onTaskUpdated }: TaskQueueProps) {
         <div className="w-full space-y-4">
             <div className="bg-muted/30 px-4 py-3 border rounded-xl flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
-                <h3 className="font-bold text-foreground">Pending Tasks Queue</h3>
+                <h3 className="font-bold text-foreground">Housekeeping Tasks Queue</h3>
             </div>
             
             <DataTable 

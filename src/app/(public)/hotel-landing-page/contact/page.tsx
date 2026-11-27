@@ -8,8 +8,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata = {
-  title: "Exclusive Premium Packages & Active Promotional Hub | Luxury Stays",
-  description: "Browse dynamic resort reduction packages, flash campaigns, and claim premium rates via our checkout pipeline interfaces.",
+  title: "Contact & Concierge | Luxury Stays",
+  description: "Reach our hotel concierge team for booking inquiries, special requests, and directions.",
 };
 
 export default function ContactPage() {

@@ -1,7 +1,9 @@
 "use server";
 
+import crypto from "crypto";
 import { directus } from "../../lib/directus";
 import { updateItem, readItem } from "@directus/sdk";
+import { bookingEnv } from "./config";
 
 interface VerificationResult {
   success: boolean;
@@ -20,16 +22,29 @@ interface GuestDetail {
 }
 
 interface ReservationDetail {
+  status?: string;
   guest_id?: GuestDetail;
   total_amount?: string | number;
   check_in?: string;
   check_out?: string;
 }
 
+function isValidVerificationToken(reservationId: string, token?: string): boolean {
+  if (!token || !/^[a-f0-9]{64}$/i.test(token)) return false;
+  const expected = crypto
+    .createHmac("sha256", bookingEnv.PAYMONGO_SECRET_KEY)
+    .update(reservationId)
+    .digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(token, "hex"), Buffer.from(expected, "hex"));
+}
+
 /**
  * Reconciles the redirect payload, transitions status to paid, and resolves guest metadata.
  */
-export async function verifyAndFinalizeReservation(reservationId: string): Promise<VerificationResult> {
+export async function verifyAndFinalizeReservation(
+  reservationId: string,
+  token?: string
+): Promise<VerificationResult> {
   try {
     if (!reservationId) {
       return { success: false, error: "Missing reservation reference ID configuration parameter." };
@@ -57,19 +72,35 @@ export async function verifyAndFinalizeReservation(reservationId: string): Promi
       return { success: false, error: `Reservation reference allocation #${reservationId} could not be located.` };
     }
 
-    // STAGE 2: Attempt to transition the state flag cleanly to "paid"
-    try {
-      await directus.request(
-        updateItem("reservations_hos", reservationId, {
-          status: "paid",
-        })
-      );
-    } catch (updateError) {
-      const err = updateError as Error;
-      console.error("❌ [STAGE 2 FAILED] Directus Update Operation Error:", err);
+    const currentStatus = (reservation.status || "").toLowerCase();
+
+    // STAGE 2: Transition pending -> paid only with a valid signed redirect token
+    if (currentStatus === "pending") {
+      if (!isValidVerificationToken(reservationId, token)) {
+        return {
+          success: false,
+          error: "Invalid or missing payment verification token.",
+        };
+      }
+
+      try {
+        await directus.request(
+          updateItem("reservations_hos", reservationId, {
+            status: "paid",
+          })
+        );
+      } catch (updateError) {
+        const err = updateError as Error;
+        console.error("❌ [STAGE 2 FAILED] Directus Update Operation Error:", err);
+        return {
+          success: false,
+          error: `[Directus Update Error]: ${err.message || "Failed to change status to 'paid'."}`,
+        };
+      }
+    } else if (currentStatus !== "paid" && currentStatus !== "confirmed" && currentStatus !== "checked-in") {
       return {
         success: false,
-        error: `[Directus Update Error]: ${err.message || "Failed to change status to 'paid'."}`,
+        error: `Reservation #${reservationId} cannot be confirmed (status: ${reservation.status || "unknown"}).`,
       };
     }
 

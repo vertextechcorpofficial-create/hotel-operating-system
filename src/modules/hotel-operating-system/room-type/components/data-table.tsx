@@ -198,6 +198,28 @@ export function RoomTypeDataTable() {
                                     <p className="mt-1">{viewingType.bed}</p>
                                 </div>
                             </div>
+                            <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Original Price</p>
+                                    <p className="mt-1">
+                                        {viewingType.original_price != null ? `₱${Number(viewingType.original_price).toFixed(2)}` : "N/A"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Room Size (SQM)</p>
+                                    <p className="mt-1">{viewingType.sqm || "N/A"}</p>
+                                </div>
+                            </div>
+                            <div className="border-b pb-4">
+                                <p className="text-sm font-medium text-muted-foreground">Badge</p>
+                                <p className="mt-1">{viewingType.badge || "None"}</p>
+                            </div>
+                            <div className="border-b pb-4">
+                                <p className="text-sm font-medium text-muted-foreground">Description</p>
+                                <p className="mt-1 text-sm text-muted-foreground whitespace-pre-line">
+                                    {viewingType.description || "No description provided."}
+                                </p>
+                            </div>
                             <div className="pt-2 flex justify-end">
                                 <Button onClick={() => setIsViewOpen(false)}>Close</Button>
                             </div>

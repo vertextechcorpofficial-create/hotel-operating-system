@@ -29,7 +29,10 @@ export const MonthPane = ({
   onCellHover,
 }: Props) => {
   const cells = useMemo(() => buildGridCells(year, month), [year, month]);
-  const todayTimestamp = useMemo(() => new Date(2026, 4, 25).getTime(), []);
+  const todayTimestamp = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  }, []);
 
   // Determines the availability status of a given calendar date grid square cleanly using flat day records
   const getStatus = useCallback(
@@ -72,6 +75,7 @@ export const MonthPane = ({
   };
 
   const getIsPast = (dateStr: string) => parseAbsDate(dateStr) < todayTimestamp;
+  const getIsToday = (dateStr: string) => parseAbsDate(dateStr) === todayTimestamp;
 
   const getIsEndpoint = (dateStr: string) => {
     return (
@@ -129,6 +133,7 @@ export const MonthPane = ({
               dateStr={cell.dateStr}
               dayNumber={cell.dayNumber}
               isPast={getIsPast(cell.dateStr)}
+              isToday={getIsToday(cell.dateStr)}
               isFullySoldOut={status.isFullySoldOut}
               lowInventoryAlert={status.lowInventoryAlert}
               availableRoomsCount={status.availableRoomsCount}

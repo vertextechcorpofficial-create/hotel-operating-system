@@ -120,13 +120,16 @@ export function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskModalProp
                 );
                 const oooStatusId = oooStatus?.id || 5; // fallback OOO status ID
 
-                await fetch(`/api/hos/room-registration/${matchingRoom.id}`, {
-                    method: "PATCH",
+                const roomUpdateRes = await fetch(`/api/hos/room-registration/${matchingRoom.id}`, {
+                    method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         housekeeping_status_id: oooStatusId
                     })
                 });
+                if (!roomUpdateRes.ok) {
+                    throw new Error("Task created, but failed to update room housekeeping status");
+                }
             }
 
             toast.success("Task created successfully");

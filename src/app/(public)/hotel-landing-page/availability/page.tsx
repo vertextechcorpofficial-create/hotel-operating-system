@@ -1,4 +1,5 @@
 import { directus } from "@/modules/hotel-operating-system/hotel-landing-page/pages/booking/lib/directus";
+import { NavBar, Footer } from "@/modules/hotel-operating-system/hotel-landing-page";
 import { CalendarLayout } from "@/modules/hotel-operating-system/hotel-landing-page/pages/calendar/CalendarLayout";
 import { Suspense } from "react";
 import { readItems } from "@directus/sdk";
@@ -20,16 +21,20 @@ export default async function AvailabilityPage() {
   );
   
   return (
-    <main className="min-h-screen bg-white pt-6 pb-16">
-      <Suspense 
-        fallback = {
-          <div className="max-w-[1400px] mx-auto px-6 py-6 text-sm text-zinc-400">
-            Loading interactive calendar…
-          </div>
-        }
-      >
-        <CalendarLayout rooms={roomsData as CalendarRoom[]} />
-      </Suspense>
+    <main className="min-h-screen bg-white flex flex-col">
+      <NavBar />
+      <div className="pt-24 pb-16 flex-grow">
+        <Suspense 
+          fallback = {
+            <div className="max-w-[1400px] mx-auto px-6 py-6 text-sm text-zinc-400">
+              Loading interactive calendar…
+            </div>
+          }
+        >
+          <CalendarLayout rooms={roomsData as CalendarRoom[]} />
+        </Suspense>
+      </div>
+      <Footer />
     </main>
   );
 }

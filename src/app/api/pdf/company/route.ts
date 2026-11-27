@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { decodeJwtPayload, COOKIE_NAME } from '@/lib/auth-utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function GET() {
     try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get(COOKIE_NAME)?.value;
+        const payload = token ? decodeJwtPayload(token) : null;
+        if (!payload?.sub) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+        }
+
         if (!API_BASE_URL) {
             console.warn('NEXT_PUBLIC_API_BASE_URL is not defined in environment variables.');
             return NextResponse.json(
@@ -35,8 +44,10 @@ export async function GET() {
 
             if (isUuid) {
                 try {
-                    const assetUrl = `${API_BASE_URL}/assets/${logoUuid}${staticToken ? `?access_token=${staticToken}` : ''}`;
-                    const imgRes = await fetch(assetUrl);
+                    const assetUrl = `${API_BASE_URL}/assets/${logoUuid}`;
+                    const imgRes = await fetch(assetUrl, {
+                        headers: staticToken ? { 'Authorization': `Bearer ${staticToken}` } : {},
+                    });
 
                     if (imgRes.ok) {
                         const contentType = imgRes.headers.get('content-type') || 'image/png';

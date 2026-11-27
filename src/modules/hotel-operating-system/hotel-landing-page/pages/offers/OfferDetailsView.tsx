@@ -7,6 +7,7 @@ import { offers } from "../../data/promo-offer-data";
 import { OfferCard } from "./OfferCard";
 import { OfferDetailHero } from "./OfferDetailHero";
 import { OfferDetailSidebar } from "./OfferDetailSidebar";
+import { parseAdultsParam } from "../../lib/url-params";
 
 const formatPromoDateRange = (startStr: string, endStr: string) => {
   const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' };
@@ -34,7 +35,7 @@ function OfferDetailsViewInner() {
   const activeOfferId = searchParams.get("id");
   const checkinStr = searchParams.get("checkin") || "";
   const checkoutStr = searchParams.get("checkout") || "";
-  const guestCount = searchParams.get("guests") || "2";
+  const guestCount = String(parseAdultsParam(searchParams.get("guests"), 2, 20));
 
   const currentOffer = activeOfferId ? campaignDeck[activeOfferId] : null;
 

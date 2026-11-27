@@ -165,7 +165,7 @@ export default function FrontDeskDashboardModule() {
                             className="pl-9 w-[220px]"
                         />
                     </div>
-                    <Button onClick={() => router.push("/hos/room-booking")}>
+                    <Button onClick={() => router.push("/hos/room-booking?mode=walk-in")}>
                         <Plus className="h-4 w-4 mr-2" />
                         Register Walk-In
                     </Button>

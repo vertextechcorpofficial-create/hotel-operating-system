@@ -57,21 +57,22 @@ export function CheckInDialog({ open, onOpenChange, arrival, onSuccess }: CheckI
             return;
         }
 
-        // Fetch available rooms for assignment
-        if (arrival.roomTypeId) {
-            setLoadingRooms(true);
-            fetch(`/api/hos/front-desk-dashboard/available-rooms?roomTypeId=${arrival.roomTypeId}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    setAvailableRooms(data.data || []);
-                    setSelectedRoomId("");
-                })
-                .catch(() => {
-                    toast.error("Failed to load available rooms.");
-                    setAvailableRooms([]);
-                })
-                .finally(() => setLoadingRooms(false));
-        }
+        // Fetch available rooms for assignment (all types when the arrival has no room type yet)
+        setLoadingRooms(true);
+        const roomsUrl = arrival.roomTypeId
+            ? `/api/hos/front-desk-dashboard/available-rooms?roomTypeId=${arrival.roomTypeId}`
+            : `/api/hos/front-desk-dashboard/available-rooms`;
+        fetch(roomsUrl)
+            .then((res) => res.json())
+            .then((data) => {
+                setAvailableRooms(data.data || []);
+                setSelectedRoomId("");
+            })
+            .catch(() => {
+                toast.error("Failed to load available rooms.");
+                setAvailableRooms([]);
+            })
+            .finally(() => setLoadingRooms(false));
     }, [open, arrival, hasRoom]);
 
     const handleCheckIn = async () => {

@@ -27,11 +27,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
         const cookieStore = await cookies();
         const token = cookieStore.get(COOKIE_NAME)?.value;
-        let userId = null;
-        if (token) {
-            const payload = decodeJwtPayload(token);
-            if (payload && payload.sub) userId = parseInt(payload.sub, 10);
+        const payload = token ? decodeJwtPayload(token) : null;
+        if (!payload?.sub) {
+            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
         }
+        const userId = parseInt(payload.sub, 10);
 
         const body = await request.json();
         const { status, start_time: bodyStartTime } = body;

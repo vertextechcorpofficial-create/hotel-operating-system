@@ -60,16 +60,21 @@ export function ExtendStayDialog({ open, onOpenChange, departure, onSuccess }: E
 
         const fetchDetails = async () => {
             try {
-                // Get the current reservation to get the min date
-                const res = await fetch(`/api/hos/front-desk-dashboard`);
-                await res.json();
-                
-                // Let's find this reservation checkout date or default to tomorrow
-                const today = new Date();
-                const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-                const tomorrowStr = tomorrow.toISOString().split("T")[0];
-                setMinDate(tomorrowStr);
-                setNewCheckOutDate(tomorrowStr);
+                const res = await fetch(`/api/hos/folio?reservationId=${departure.reservationId}`);
+                const result = await res.json();
+                const currentOut: string | undefined = result?.data?.reservation?.check_out_date || result?.data?.reservation?.check_out;
+
+                let baseDate = new Date();
+                if (currentOut) {
+                    const [y, m, d] = currentOut.split("T")[0].split("-").map(Number);
+                    if (y && m && d) {
+                        baseDate = new Date(Date.UTC(y, m - 1, d));
+                    }
+                }
+                const nextDay = new Date(baseDate.getTime() + 24 * 60 * 60 * 1000);
+                const nextDayStr = nextDay.toISOString().split("T")[0];
+                setMinDate(nextDayStr);
+                setNewCheckOutDate(nextDayStr);
             } catch {
                 toast.error("Failed to load reservation details.");
             } finally {
@@ -209,7 +214,7 @@ export function ExtendStayDialog({ open, onOpenChange, departure, onSuccess }: E
                                 <div className="flex items-start gap-2.5 text-xs text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/20">
                                     <Check className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                                     <span>
-                                        **Room {checkData.currentRoomNumber}** is available! The guest can stay in their current room for the entire extended stay.
+                                        <strong>Room {checkData.currentRoomNumber}</strong> is available! The guest can stay in their current room for the entire extended stay.
                                     </span>
                                 </div>
                             ) : (
@@ -218,7 +223,7 @@ export function ExtendStayDialog({ open, onOpenChange, departure, onSuccess }: E
                                     <div className="flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20">
                                         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                                         <span>
-                                            **Room {checkData.currentRoomNumber}** is booked during these dates. A **Room Move** is required.
+                                            <strong>Room {checkData.currentRoomNumber}</strong> is booked during these dates. A <strong>Room Move</strong> is required.
                                         </span>
                                     </div>
 
