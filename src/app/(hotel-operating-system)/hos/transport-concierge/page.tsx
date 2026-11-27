@@ -12,6 +12,7 @@ import { NavUser } from "@/components/shared/app-sidebar/nav-user";
 import { cookies } from "next/headers";
 
 import TransportConciergeModule from "@/modules/hotel-operating-system/transport-concierge";
+import { HeaderRoleSwitcher } from "@/modules/hotel-operating-system/transport-concierge/components/header-role-switcher";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -111,7 +112,8 @@ export default async function TransportConciergePage() {
           </div>
         </div>
 
-        <div className="flex h-full items-center px-2 sm:px-4 shrink-0 max-w-[48vw] sm:max-w-none overflow-hidden">
+        <div className="flex h-full items-center gap-3 px-2 sm:px-4 shrink-0 max-w-[60vw] sm:max-w-none overflow-hidden">
+          <HeaderRoleSwitcher />
           <NavUser user={headerUser} />
         </div>
       </header>

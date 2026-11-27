@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   ArrowLeftRight,
-  Clock,
+  Car,
   FileSpreadsheet,
   Loader2,
   Plus,
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { AvailabilityCalendar } from "./components/availability-calendar";
 import { DispatchLedger } from "./components/dispatch-ledger";
 import { FolioPostingsTab } from "./components/folio-postings-tab";
+import { TRANSPORT_ROLE_EVENT } from "./components/header-role-switcher";
 import { KpiCards } from "./components/kpi-cards";
 import {
   BookingModal,
@@ -111,10 +112,14 @@ export default function TransportConciergeModule() {
     void fetchDispatchData(false);
   }, [fetchDispatchData]);
 
-  const handleRoleChange = (nextRole: TransportRole) => {
-    setCurrentRole(nextRole);
-    toast.info(`Switched active session role to ${nextRole}`);
-  };
+  useEffect(() => {
+    const onRoleChange = (e: Event) => {
+      const next = (e as CustomEvent<TransportRole>).detail;
+      if (next) setCurrentRole(next);
+    };
+    window.addEventListener(TRANSPORT_ROLE_EVENT, onRoleChange);
+    return () => window.removeEventListener(TRANSPORT_ROLE_EVENT, onRoleChange);
+  }, []);
 
   const handleOpenNewBooking = () => {
     if (!canActorManageBookings(currentRole)) {
@@ -399,42 +404,33 @@ export default function TransportConciergeModule() {
   const canCreate = canActorManageBookings(currentRole);
 
   return (
-    <div className="max-w-[1440px] w-full mx-auto px-2 sm:px-4 py-2 space-y-5">
-      {/* Page Title & Primary Action Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
+    <div className="max-w-[1440px] w-full mx-auto px-2 sm:px-4 py-2 space-y-6">
+      {/* Page Title & Metadata Header (Aligned 1-to-1 with newer HOS modules) */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 no-print">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Concierge &amp; Transport Dispatch
-          </h1>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-1">
-            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Business Date: {activeDate}</span>
-            <span className="text-border">•</span>
-            <span>
-              {data.meta.turnaroundBufferMins}-min Turnaround Buffer Active
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 text-[#1a68ff] dark:text-blue-400 flex items-center justify-center">
+              <Car className="w-4 h-4" />
+            </span>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+              Concierge &amp; Transport Dispatch
+            </h1>
+            <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/50 text-[#1a68ff] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              Business Date: {activeDate} • {data.meta.turnaroundBufferMins}-min Buffer
             </span>
           </div>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Coordinate airport pickups, chauffeur charters, and guest tours with
+            turnaround buffer locks, fleet/driver dispatch, and automated folio
+            billing.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={currentRole}
-            onChange={(e) =>
-              handleRoleChange(e.target.value as TransportRole)
-            }
-            aria-label="Switch HOS Role"
-            className="rounded-lg border border-blue-200 dark:border-blue-800 bg-card text-xs font-semibold text-[#1a73e8] dark:text-blue-400 px-3 py-2 focus:outline-none cursor-pointer shadow-2xs"
-          >
-            <option value="Concierge">Role: Concierge / FD</option>
-            <option value="Driver">Role: Driver</option>
-            <option value="Billing">Role: Billing</option>
-            <option value="Admin">Role: Admin / QA</option>
-          </select>
-
+        <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center shrink-0 whitespace-nowrap">
           <button
             type="button"
             onClick={() => void fetchDispatchData(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border hover:bg-muted transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 bg-card hover:bg-muted text-foreground border border-border text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xs transition"
           >
             <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
             Refresh
@@ -443,7 +439,7 @@ export default function TransportConciergeModule() {
           <button
             type="button"
             onClick={() => setManifestOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border hover:bg-muted transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 bg-card hover:bg-muted text-foreground border border-border text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xs transition"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />
             Pickup Manifest
@@ -452,7 +448,7 @@ export default function TransportConciergeModule() {
           <button
             type="button"
             onClick={() => setFleetOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-card text-foreground border border-border hover:bg-muted transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 bg-card hover:bg-muted text-foreground border border-border text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xs transition"
           >
             <ArrowLeftRight className="w-3.5 h-3.5 text-muted-foreground" />
             Fleet &amp; Roster
@@ -461,7 +457,7 @@ export default function TransportConciergeModule() {
           <button
             type="button"
             onClick={handleOpenNewBooking}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#1a73e8] text-white hover:bg-[#1557b0] transition shadow-xs ${
+            className={`inline-flex items-center gap-1.5 bg-slate-950 hover:bg-slate-800 dark:bg-[#1a68ff] dark:hover:bg-[#1557d6] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xs transition ${
               !canCreate ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
