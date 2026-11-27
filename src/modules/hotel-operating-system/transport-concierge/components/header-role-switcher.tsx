@@ -1,10 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import type { TransportRole } from "../types";
 
 export const TRANSPORT_ROLE_EVENT = "hos-transport-role-change";
+
+const ROLE_OPTIONS: { value: TransportRole; label: string }[] = [
+  { value: "Concierge", label: "Concierge / Front Desk" },
+  { value: "Driver", label: "Transport Driver" },
+  { value: "Billing", label: "Billing / Folio Auditor" },
+  { value: "Admin", label: "System Admin / QA" },
+];
 
 export function HeaderRoleSwitcher() {
   const [role, setRole] = useState<TransportRole>("Concierge");
@@ -17,21 +25,29 @@ export function HeaderRoleSwitcher() {
     toast.info(`Switched active HOS actor role to: ${nextRole}`);
   };
 
+  const activeLabel =
+    ROLE_OPTIONS.find((opt) => opt.value === role)?.label || role;
+
   return (
-    <div className="hidden md:flex items-center gap-2.5 bg-muted/70 border border-border rounded-lg px-3.5 py-1.5 shrink-0 whitespace-nowrap">
-      <span className="text-[11px] font-medium text-muted-foreground">
+    <div className="relative hidden md:inline-flex items-center gap-2 bg-muted/70 hover:bg-muted border border-border rounded-lg px-3 py-1.5 shrink-0 whitespace-nowrap transition-colors">
+      <span className="text-xs font-medium text-muted-foreground leading-none">
         Active Role:
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground leading-none">
+        <span>{activeLabel}</span>
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       </span>
       <select
         value={role}
         onChange={(e) => handleChange(e.target.value as TransportRole)}
         aria-label="Active HOS Role"
-        className="bg-transparent text-xs font-semibold text-foreground pr-1 focus:outline-none cursor-pointer dark:[&>option]:bg-card dark:[&>option]:text-foreground"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer dark:[&>option]:bg-card dark:[&>option]:text-foreground"
       >
-        <option value="Concierge">Concierge / Front Desk</option>
-        <option value="Driver">Transport Driver</option>
-        <option value="Billing">Billing / Folio Auditor</option>
-        <option value="Admin">System Admin / QA</option>
+        {ROLE_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
       </select>
     </div>
   );

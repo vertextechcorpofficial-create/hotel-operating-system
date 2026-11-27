@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import type { AmenityRole } from "../types";
 
 export const AMENITY_ROLE_EVENT = "hos-amenity-role-change";
+
+const ROLE_OPTIONS: { value: AmenityRole; label: string }[] = [
+  { value: "Receptionist", label: "Spa / Front Desk Receptionist" },
+  { value: "Manager", label: "HOS Operations Manager" },
+  { value: "Therapist", label: "Therapist / Attendant" },
+];
 
 export function HeaderRoleSwitcher() {
   const [role, setRole] = useState<AmenityRole>("Receptionist");
@@ -17,20 +24,29 @@ export function HeaderRoleSwitcher() {
     toast.info(`Switched active HOS actor role to: ${nextRole}`);
   };
 
+  const activeLabel =
+    ROLE_OPTIONS.find((opt) => opt.value === role)?.label || role;
+
   return (
-    <div className="hidden md:flex items-center gap-2.5 bg-muted/70 border border-border rounded-lg px-3.5 py-1.5 shrink-0 whitespace-nowrap">
-      <span className="text-[11px] font-medium text-muted-foreground">
+    <div className="relative hidden md:inline-flex items-center gap-2 bg-muted/70 hover:bg-muted border border-border rounded-lg px-3 py-1.5 shrink-0 whitespace-nowrap transition-colors">
+      <span className="text-xs font-medium text-muted-foreground leading-none">
         Active Role:
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground leading-none">
+        <span>{activeLabel}</span>
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       </span>
       <select
         value={role}
         onChange={(e) => handleChange(e.target.value as AmenityRole)}
         aria-label="Active HOS Role"
-        className="bg-transparent text-xs font-semibold text-foreground pr-1 focus:outline-none cursor-pointer dark:[&>option]:bg-card dark:[&>option]:text-foreground"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer dark:[&>option]:bg-card dark:[&>option]:text-foreground"
       >
-        <option value="Receptionist">Spa / Front Desk Receptionist</option>
-        <option value="Manager">HOS Operations Manager</option>
-        <option value="Therapist">Therapist / Attendant</option>
+        {ROLE_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
       </select>
     </div>
   );
